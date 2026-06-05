@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="220" viewBox="0 0 520 220">
+<rect width="100%" height="100%" fill="#f8fafc"/>
+<text x="10" y="18" font-size="12" font-family="sans-serif" font-weight="bold">S02 — St=2 real zigzag n=4</text>
+<line x1="59.0" y1="44.0" x2="278.9" y2="171.0" stroke="#1e293b" stroke-width="2"/>
+<line x1="416.3" y1="91.7" x2="278.9" y2="171.0" stroke="#1e293b" stroke-width="2"/>
+<line x1="178.1" y1="91.7" x2="278.9" y2="171.0" stroke="#1e293b" stroke-width="2"/>
+<line x1="297.2" y1="44.0" x2="278.9" y2="171.0" stroke="#1e293b" stroke-width="2"/>
+<line x1="278.9" y1="171.0" x2="278.9" y2="171.0" stroke="#1e293b" stroke-width="2"/>
+<circle cx="278.9" cy="171.0" r="5" fill="#22c55e"/>
+<circle cx="278.9" cy="171.0" r="5" fill="#22c55e"/>
+<circle cx="59.0" cy="44.0" r="6" fill="#dc2626"/>
+<circle cx="178.1" cy="91.7" r="4" fill="#2563eb"/>
+<circle cx="297.2" cy="44.0" r="4" fill="#2563eb"/>
+<circle cx="416.3" cy="91.7" r="6" fill="#b91c1c"/>
+<text x="10" y="212" font-size="10" font-family="monospace" fill="#334155">St=2  edges=5  tree=28.1km  total=28.1km  ok</text>
+<text x="280" y="32" font-size="9" fill="#64748b">● start/end  ● intermediate  ● steiner  ─ tree</text>
+</svg>

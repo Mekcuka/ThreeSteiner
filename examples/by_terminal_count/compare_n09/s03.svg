@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="220" viewBox="0 0 520 220">
+<rect width="100%" height="100%" fill="#f8fafc"/>
+<text x="10" y="18" font-size="12" font-family="sans-serif" font-weight="bold">S03 — St=3 chain (5 terminals)</text>
+<line x1="325.1" y1="153.9" x2="415.3" y2="153.9" stroke="#1e293b" stroke-width="2"/>
+<line x1="415.3" y1="153.9" x2="505.6" y2="153.9" stroke="#1e293b" stroke-width="2"/>
+<line x1="54.4" y1="139.5" x2="325.1" y2="153.9" stroke="#1e293b" stroke-width="2"/>
+<line x1="144.7" y1="175.6" x2="325.1" y2="153.9" stroke="#1e293b" stroke-width="2"/>
+<line x1="234.9" y1="139.5" x2="415.3" y2="153.9" stroke="#1e293b" stroke-width="2"/>
+<line x1="325.1" y1="175.6" x2="505.6" y2="153.9" stroke="#1e293b" stroke-width="2"/>
+<line x1="415.3" y1="139.5" x2="505.6" y2="153.9" stroke="#1e293b" stroke-width="2"/>
+<circle cx="325.1" cy="153.9" r="5" fill="#22c55e"/>
+<circle cx="415.3" cy="153.9" r="5" fill="#22c55e"/>
+<circle cx="505.6" cy="153.9" r="5" fill="#22c55e"/>
+<circle cx="54.4" cy="139.5" r="6" fill="#dc2626"/>
+<circle cx="144.7" cy="175.6" r="4" fill="#2563eb"/>
+<circle cx="234.9" cy="139.5" r="4" fill="#2563eb"/>
+<circle cx="325.1" cy="175.6" r="4" fill="#2563eb"/>
+<circle cx="415.3" cy="139.5" r="6" fill="#b91c1c"/>
+<text x="10" y="212" font-size="10" font-family="monospace" fill="#334155">St=3  edges=7  tree=23.2km  total=23.2km  ok</text>
+<text x="280" y="32" font-size="9" fill="#64748b">● start/end  ● intermediate  ● steiner  ─ tree</text>
+</svg>

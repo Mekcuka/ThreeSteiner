@@ -1,0 +1,327 @@
+{
+  "type": "FeatureCollection",
+  "properties": {
+    "layout": "zigzag",
+    "n_terminals": 8,
+    "segment_spacing_m": 5000.0,
+    "half_span_m": 17500.0,
+    "zigzag_amplitude_m": 1000.0,
+    "backbone_length_m": 80654.879,
+    "total_length_m": 80654.879,
+    "warnings": [
+      "smt_heuristic_mst"
+    ]
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.34036264557895,
+          55.75899321605919
+        ]
+      },
+      "properties": {
+        "id": "9a73d197-cfcd-4f5e-a138-39f8519bb78c",
+        "type": "oil_pad",
+        "role": "start",
+        "kind": "terminal"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.420259032556395,
+          55.74100678394081
+        ]
+      },
+      "properties": {
+        "id": "95a44377-1980-430b-9e5a-1b5953aa3279",
+        "type": "oil_pad",
+        "role": "intermediate",
+        "kind": "terminal"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.50015541953383,
+          55.75899321605919
+        ]
+      },
+      "properties": {
+        "id": "f86289eb-ff5d-4312-983e-884091884200",
+        "type": "oil_pad",
+        "role": "intermediate",
+        "kind": "terminal"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.58005180651128,
+          55.74100678394081
+        ]
+      },
+      "properties": {
+        "id": "591604cb-f7e2-4ef7-8b49-d4f1a3fa04a4",
+        "type": "oil_pad",
+        "role": "intermediate",
+        "kind": "terminal"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.65994819348872,
+          55.75899321605919
+        ]
+      },
+      "properties": {
+        "id": "b5037f8a-be0e-4b3b-b0d6-335a812826fb",
+        "type": "oil_pad",
+        "role": "intermediate",
+        "kind": "terminal"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.73984458046616,
+          55.74100678394081
+        ]
+      },
+      "properties": {
+        "id": "70dff17c-4e8f-4166-b287-cc77a1ec7571",
+        "type": "oil_pad",
+        "role": "intermediate",
+        "kind": "terminal"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.8197409674436,
+          55.75899321605919
+        ]
+      },
+      "properties": {
+        "id": "d602d09d-1135-43d4-b098-01a5453cad2c",
+        "type": "oil_pad",
+        "role": "intermediate",
+        "kind": "terminal"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.899637354421046,
+          55.74100678394081
+        ]
+      },
+      "properties": {
+        "id": "6c192d17-aaa4-4250-b99c-0b6e6123b28c",
+        "type": "oil_pad",
+        "role": "end",
+        "kind": "terminal"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.62,
+          55.75
+        ]
+      },
+      "properties": {
+        "id": "steiner:0",
+        "kind": "steiner"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            37.34036264557895,
+            55.75899321605919
+          ],
+          [
+            37.62,
+            55.75
+          ]
+        ]
+      },
+      "properties": {
+        "from": "terminal:9a73d197-cfcd-4f5e-a138-39f8519bb78c",
+        "to": "steiner:0",
+        "kind": "backbone"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            37.420259032556395,
+            55.74100678394081
+          ],
+          [
+            37.62,
+            55.75
+          ]
+        ]
+      },
+      "properties": {
+        "from": "terminal:95a44377-1980-430b-9e5a-1b5953aa3279",
+        "to": "steiner:0",
+        "kind": "backbone"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            37.50015541953383,
+            55.75899321605919
+          ],
+          [
+            37.62,
+            55.75
+          ]
+        ]
+      },
+      "properties": {
+        "from": "terminal:f86289eb-ff5d-4312-983e-884091884200",
+        "to": "steiner:0",
+        "kind": "backbone"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            37.58005180651128,
+            55.74100678394081
+          ],
+          [
+            37.62,
+            55.75
+          ]
+        ]
+      },
+      "properties": {
+        "from": "terminal:591604cb-f7e2-4ef7-8b49-d4f1a3fa04a4",
+        "to": "steiner:0",
+        "kind": "backbone"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            37.65994819348872,
+            55.75899321605919
+          ],
+          [
+            37.62,
+            55.75
+          ]
+        ]
+      },
+      "properties": {
+        "from": "terminal:b5037f8a-be0e-4b3b-b0d6-335a812826fb",
+        "to": "steiner:0",
+        "kind": "backbone"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            37.73984458046616,
+            55.74100678394081
+          ],
+          [
+            37.62,
+            55.75
+          ]
+        ]
+      },
+      "properties": {
+        "from": "terminal:70dff17c-4e8f-4166-b287-cc77a1ec7571",
+        "to": "steiner:0",
+        "kind": "backbone"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            37.8197409674436,
+            55.75899321605919
+          ],
+          [
+            37.62,
+            55.75
+          ]
+        ]
+      },
+      "properties": {
+        "from": "terminal:d602d09d-1135-43d4-b098-01a5453cad2c",
+        "to": "steiner:0",
+        "kind": "backbone"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            37.899637354421046,
+            55.74100678394081
+          ],
+          [
+            37.62,
+            55.75
+          ]
+        ]
+      },
+      "properties": {
+        "from": "terminal:6c192d17-aaa4-4250-b99c-0b6e6123b28c",
+        "to": "steiner:0",
+        "kind": "backbone"
+      }
+    }
+  ]
+}

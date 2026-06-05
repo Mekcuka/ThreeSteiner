@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="200">
+<text x="10" y="16" font-size="12" font-weight="bold">total tree length vs steiner_points (1..20)</text>
+<rect x="40" y="140" width="31" height="10" fill="#2563eb"/>
+<text x="55.5" y="165" text-anchor="middle" font-size="8">1</text>
+<rect x="73" y="126" width="31" height="24" fill="#2563eb"/>
+<rect x="106" y="130" width="31" height="20" fill="#2563eb"/>
+<text x="121.5" y="165" text-anchor="middle" font-size="8">3</text>
+<rect x="139" y="134" width="31" height="16" fill="#2563eb"/>
+<rect x="172" y="120" width="31" height="30" fill="#2563eb"/>
+<text x="187.5" y="165" text-anchor="middle" font-size="8">5</text>
+<rect x="205" y="121" width="31" height="29" fill="#2563eb"/>
+<rect x="238" y="110" width="31" height="40" fill="#2563eb"/>
+<text x="253.5" y="165" text-anchor="middle" font-size="8">7</text>
+<rect x="271" y="108" width="31" height="42" fill="#2563eb"/>
+<rect x="304" y="100" width="31" height="50" fill="#2563eb"/>
+<text x="319.5" y="165" text-anchor="middle" font-size="8">9</text>
+<rect x="337" y="95" width="31" height="55" fill="#2563eb"/>
+<rect x="370" y="90" width="31" height="60" fill="#2563eb"/>
+<text x="385.5" y="165" text-anchor="middle" font-size="8">11</text>
+<rect x="403" y="82" width="31" height="68" fill="#2563eb"/>
+<rect x="436" y="79" width="31" height="71" fill="#2563eb"/>
+<text x="451.5" y="165" text-anchor="middle" font-size="8">13</text>
+<rect x="469" y="69" width="31" height="81" fill="#2563eb"/>
+<rect x="502" y="69" width="31" height="81" fill="#2563eb"/>
+<text x="517.5" y="165" text-anchor="middle" font-size="8">15</text>
+<rect x="535" y="56" width="31" height="94" fill="#2563eb"/>
+<rect x="568" y="59" width="31" height="91" fill="#2563eb"/>
+<text x="583.5" y="165" text-anchor="middle" font-size="8">17</text>
+<rect x="601" y="43" width="31" height="107" fill="#2563eb"/>
+<rect x="634" y="49" width="31" height="101" fill="#2563eb"/>
+<text x="649.5" y="165" text-anchor="middle" font-size="8">19</text>
+<rect x="667" y="30" width="31" height="120" fill="#2563eb"/>
+<text x="710" y="190" text-anchor="end" font-size="9" fill="#64748b">max=141km</text>
+</svg>

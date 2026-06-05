@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="220" viewBox="0 0 520 220">
+<rect width="100%" height="100%" fill="#f8fafc"/>
+<text x="10" y="18" font-size="12" font-family="sans-serif" font-weight="bold">S10 — St=10 (5 clusters x2 Steiner)</text>
+<line x1="45.2" y1="175.8" x2="205.2" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="45.2" y1="184.8" x2="205.2" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="50.9" y1="175.8" x2="205.8" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="50.9" y1="184.8" x2="205.8" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="205.2" y1="180.3" x2="205.8" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="122.4" y1="184.8" x2="282.5" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="122.4" y1="175.8" x2="282.5" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="128.2" y1="184.8" x2="283.0" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="128.2" y1="175.8" x2="283.0" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="282.5" y1="180.3" x2="283.0" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="199.7" y1="175.8" x2="359.7" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="199.7" y1="184.8" x2="359.7" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="205.5" y1="175.8" x2="360.3" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="205.5" y1="184.8" x2="360.3" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="359.7" y1="180.3" x2="360.3" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="277.0" y1="184.8" x2="437.0" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="277.0" y1="175.8" x2="437.0" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="282.7" y1="184.8" x2="437.6" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="282.7" y1="175.8" x2="437.6" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="437.0" y1="180.3" x2="437.6" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="354.2" y1="175.8" x2="514.3" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="354.2" y1="184.8" x2="514.3" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="360.0" y1="175.8" x2="514.8" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="360.0" y1="184.8" x2="514.8" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="514.3" y1="180.3" x2="514.8" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="205.2" y1="180.3" x2="282.5" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="282.5" y1="180.3" x2="359.7" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="359.7" y1="180.3" x2="437.0" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="437.0" y1="180.3" x2="514.3" y2="180.3" stroke="#1e293b" stroke-width="2"/>
+<circle cx="205.2" cy="180.3" r="5" fill="#22c55e"/>
+<circle cx="205.8" cy="180.3" r="5" fill="#22c55e"/>
+<circle cx="282.5" cy="180.3" r="5" fill="#22c55e"/>
+<circle cx="283.0" cy="180.3" r="5" fill="#22c55e"/>
+<circle cx="359.7" cy="180.3" r="5" fill="#22c55e"/>
+<circle cx="360.3" cy="180.3" r="5" fill="#22c55e"/>
+<circle cx="437.0" cy="180.3" r="5" fill="#22c55e"/>
+<circle cx="437.6" cy="180.3" r="5" fill="#22c55e"/>
+<circle cx="514.3" cy="180.3" r="5" fill="#22c55e"/>
+<circle cx="514.8" cy="180.3" r="5" fill="#22c55e"/>
+<circle cx="45.2" cy="175.8" r="6" fill="#dc2626"/>
+<circle cx="50.9" cy="175.8" r="4" fill="#2563eb"/>
+<circle cx="50.9" cy="184.8" r="4" fill="#2563eb"/>
+<circle cx="45.2" cy="184.8" r="4" fill="#2563eb"/>
+<circle cx="122.4" cy="184.8" r="4" fill="#2563eb"/>
+<circle cx="128.2" cy="184.8" r="4" fill="#2563eb"/>
+<circle cx="128.2" cy="175.8" r="4" fill="#2563eb"/>
+<circle cx="122.4" cy="175.8" r="4" fill="#2563eb"/>
+<circle cx="199.7" cy="175.8" r="4" fill="#2563eb"/>
+<circle cx="205.5" cy="175.8" r="4" fill="#2563eb"/>
+<circle cx="205.5" cy="184.8" r="4" fill="#2563eb"/>
+<circle cx="199.7" cy="184.8" r="4" fill="#2563eb"/>
+<circle cx="277.0" cy="184.8" r="4" fill="#2563eb"/>
+<circle cx="282.7" cy="184.8" r="4" fill="#2563eb"/>
+<circle cx="282.7" cy="175.8" r="4" fill="#2563eb"/>
+<circle cx="277.0" cy="175.8" r="4" fill="#2563eb"/>
+<circle cx="354.2" cy="175.8" r="4" fill="#2563eb"/>
+<circle cx="360.0" cy="175.8" r="4" fill="#2563eb"/>
+<circle cx="360.0" cy="184.8" r="4" fill="#2563eb"/>
+<circle cx="354.2" cy="184.8" r="6" fill="#b91c1c"/>
+<text x="10" y="212" font-size="10" font-family="monospace" fill="#334155">St=10  edges=29  tree=64.6km  total=64.6km  ok</text>
+<text x="280" y="32" font-size="9" fill="#64748b">● start/end  ● intermediate  ● steiner  ─ tree</text>
+</svg>

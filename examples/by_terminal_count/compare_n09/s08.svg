@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="220" viewBox="0 0 520 220">
+<rect width="100%" height="100%" fill="#f8fafc"/>
+<text x="10" y="18" font-size="12" font-family="sans-serif" font-weight="bold">S08 — St=8 (4 clusters x2 Steiner)</text>
+<line x1="46.8" y1="171.3" x2="206.8" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="46.8" y1="183.2" x2="206.8" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="54.4" y1="171.3" x2="207.6" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="54.4" y1="183.2" x2="207.6" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="206.8" y1="177.3" x2="207.6" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="148.7" y1="183.2" x2="308.7" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="148.7" y1="171.3" x2="308.7" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="156.3" y1="183.2" x2="309.5" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="156.3" y1="171.3" x2="309.5" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="308.7" y1="177.3" x2="309.5" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="250.5" y1="171.3" x2="410.6" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="250.5" y1="183.2" x2="410.6" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="258.2" y1="171.3" x2="411.3" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="258.2" y1="183.2" x2="411.3" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="410.6" y1="177.3" x2="411.3" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="352.4" y1="183.2" x2="512.4" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="352.4" y1="171.3" x2="512.4" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="360.0" y1="183.2" x2="513.2" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="360.0" y1="171.3" x2="513.2" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="512.4" y1="177.3" x2="513.2" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="206.8" y1="177.3" x2="308.7" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="308.7" y1="177.3" x2="410.6" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<line x1="410.6" y1="177.3" x2="512.4" y2="177.3" stroke="#1e293b" stroke-width="2"/>
+<circle cx="206.8" cy="177.3" r="5" fill="#22c55e"/>
+<circle cx="207.6" cy="177.3" r="5" fill="#22c55e"/>
+<circle cx="308.7" cy="177.3" r="5" fill="#22c55e"/>
+<circle cx="309.5" cy="177.3" r="5" fill="#22c55e"/>
+<circle cx="410.6" cy="177.3" r="5" fill="#22c55e"/>
+<circle cx="411.3" cy="177.3" r="5" fill="#22c55e"/>
+<circle cx="512.4" cy="177.3" r="5" fill="#22c55e"/>
+<circle cx="513.2" cy="177.3" r="5" fill="#22c55e"/>
+<circle cx="46.8" cy="171.3" r="6" fill="#dc2626"/>
+<circle cx="54.4" cy="171.3" r="4" fill="#2563eb"/>
+<circle cx="54.4" cy="183.2" r="4" fill="#2563eb"/>
+<circle cx="46.8" cy="183.2" r="4" fill="#2563eb"/>
+<circle cx="148.7" cy="183.2" r="4" fill="#2563eb"/>
+<circle cx="156.3" cy="183.2" r="4" fill="#2563eb"/>
+<circle cx="156.3" cy="171.3" r="4" fill="#2563eb"/>
+<circle cx="148.7" cy="171.3" r="4" fill="#2563eb"/>
+<circle cx="250.5" cy="171.3" r="4" fill="#2563eb"/>
+<circle cx="258.2" cy="171.3" r="4" fill="#2563eb"/>
+<circle cx="258.2" cy="183.2" r="4" fill="#2563eb"/>
+<circle cx="250.5" cy="183.2" r="4" fill="#2563eb"/>
+<circle cx="352.4" cy="183.2" r="4" fill="#2563eb"/>
+<circle cx="360.0" cy="183.2" r="4" fill="#2563eb"/>
+<circle cx="360.0" cy="171.3" r="4" fill="#2563eb"/>
+<circle cx="352.4" cy="171.3" r="6" fill="#b91c1c"/>
+<text x="10" y="212" font-size="10" font-family="monospace" fill="#334155">St=8  edges=23  tree=49.3km  total=49.3km  ok</text>
+<text x="280" y="32" font-size="9" fill="#64748b">● start/end  ● intermediate  ● steiner  ─ tree</text>
+</svg>

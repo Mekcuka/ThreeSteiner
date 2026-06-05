@@ -1,0 +1,142 @@
+[
+  {
+    "steiner_points": 1,
+    "terminals": 3,
+    "tree_edges": 3,
+    "tree_km": 11.9992,
+    "source": "plan_from_request"
+  },
+  {
+    "steiner_points": 2,
+    "terminals": 4,
+    "tree_edges": 5,
+    "tree_km": 28.090799999999998,
+    "source": "plan_from_request"
+  },
+  {
+    "steiner_points": 3,
+    "terminals": 5,
+    "tree_edges": 7,
+    "tree_km": 23.198,
+    "source": "Steiner chain"
+  },
+  {
+    "steiner_points": 4,
+    "terminals": 8,
+    "tree_edges": 11,
+    "tree_km": 18.6497,
+    "source": "2 x steiner_tree_4"
+  },
+  {
+    "steiner_points": 5,
+    "terminals": 7,
+    "tree_edges": 11,
+    "tree_km": 35.198,
+    "source": "Steiner chain"
+  },
+  {
+    "steiner_points": 6,
+    "terminals": 12,
+    "tree_edges": 17,
+    "tree_km": 33.974599999999995,
+    "source": "3 x steiner_tree_4"
+  },
+  {
+    "steiner_points": 7,
+    "terminals": 9,
+    "tree_edges": 15,
+    "tree_km": 47.198,
+    "source": "Steiner chain"
+  },
+  {
+    "steiner_points": 8,
+    "terminals": 16,
+    "tree_edges": 23,
+    "tree_km": 49.2995,
+    "source": "4 x steiner_tree_4"
+  },
+  {
+    "steiner_points": 9,
+    "terminals": 11,
+    "tree_edges": 19,
+    "tree_km": 59.198,
+    "source": "Steiner chain"
+  },
+  {
+    "steiner_points": 10,
+    "terminals": 20,
+    "tree_edges": 29,
+    "tree_km": 64.62440000000001,
+    "source": "5 x steiner_tree_4"
+  },
+  {
+    "steiner_points": 11,
+    "terminals": 13,
+    "tree_edges": 23,
+    "tree_km": 71.198,
+    "source": "Steiner chain"
+  },
+  {
+    "steiner_points": 12,
+    "terminals": 24,
+    "tree_edges": 35,
+    "tree_km": 79.94919999999999,
+    "source": "6 x steiner_tree_4"
+  },
+  {
+    "steiner_points": 13,
+    "terminals": 15,
+    "tree_edges": 27,
+    "tree_km": 83.198,
+    "source": "Steiner chain"
+  },
+  {
+    "steiner_points": 14,
+    "terminals": 28,
+    "tree_edges": 41,
+    "tree_km": 95.2741,
+    "source": "7 x steiner_tree_4"
+  },
+  {
+    "steiner_points": 15,
+    "terminals": 17,
+    "tree_edges": 31,
+    "tree_km": 95.198,
+    "source": "Steiner chain"
+  },
+  {
+    "steiner_points": 16,
+    "terminals": 32,
+    "tree_edges": 47,
+    "tree_km": 110.599,
+    "source": "8 x steiner_tree_4"
+  },
+  {
+    "steiner_points": 17,
+    "terminals": 19,
+    "tree_edges": 35,
+    "tree_km": 107.198,
+    "source": "Steiner chain"
+  },
+  {
+    "steiner_points": 18,
+    "terminals": 36,
+    "tree_edges": 53,
+    "tree_km": 125.9238,
+    "source": "9 x steiner_tree_4"
+  },
+  {
+    "steiner_points": 19,
+    "terminals": 21,
+    "tree_edges": 39,
+    "tree_km": 119.198,
+    "source": "Steiner chain"
+  },
+  {
+    "steiner_points": 20,
+    "terminals": 40,
+    "tree_edges": 59,
+    "tree_km": 141.2487,
+    "source": "10 x steiner_tree_4"
+  }
+]
