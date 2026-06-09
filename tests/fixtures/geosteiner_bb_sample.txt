@@ -1,0 +1,7 @@
+%!PS-Adobe-2.0 EPSF-3.0
+%%BoundingBox: 0 0 100 100
+%%Title: GeoSteiner bb sample (fixture)
+% @C 500250.125000 6199940.500000
+% @C 500500.000000 6199970.250000
+% @T 1 2
+% @T 3 4

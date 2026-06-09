@@ -1,0 +1,36 @@
+{
+  "project_id": "550e8400-e29b-41d4-a716-446655440000",
+  "mode": "full",
+  "solver": "steinerpy",
+  "warnings": ["solver:steinerpy"],
+  "metrics": {
+    "total_length_m": 12450.3,
+    "total_cost": 15820.7,
+    "max_slope_deg": 18.2
+  },
+  "network_tree": {
+    "edges": [
+      {
+        "from": "terminal:11111111-1111-1111-1111-111111111101",
+        "to": "steiner:0",
+        "length_m": 320.5,
+        "cost": 410.2,
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [[37.6, 55.75], [37.602, 55.751], [37.605, 55.752]]
+        }
+      }
+    ],
+    "steiner_points": [
+      { "id": "steiner:0", "lon": 37.605, "lat": 55.752 }
+    ]
+  },
+  "terminals": [
+    {
+      "id": "11111111-1111-1111-1111-111111111101",
+      "role": "start",
+      "attached_to": "steiner:0",
+      "via": "tree"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "project_id": "fixture-euclid-scene",
+  "mode": "euclid",
+  "terminals": [
+    {
+      "id": "t-start",
+      "type": "oil_pad",
+      "role": "start",
+      "lon": 39.00160109642316,
+      "lat": 55.94447648880544
+    },
+    {
+      "id": "t-mid",
+      "type": "oil_pad",
+      "role": "intermediate",
+      "lon": 39.0072047670713,
+      "lat": 55.94357778592078
+    },
+    {
+      "id": "t-end",
+      "type": "oil_pad",
+      "role": "end",
+      "lon": 39.00768494254051,
+      "lat": 55.942858954676176
+    },
+    {
+      "id": "t-north",
+      "type": "oil_pad",
+      "role": "branch",
+      "lon": 39.004002805924074,
+      "lat": 55.94510538599134
+    }
+  ],
+  "options": {
+    "solver": "steinerpy",
+    "connector_max_km": 0.05,
+    "steiner_radius_km": 0.0,
+    "normalize_terminal_leaves": true,
+    "edge_vertex_spacing_km": 0.0,
+    "max_points": 50
+  }
+}

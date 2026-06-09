@@ -1,0 +1,28 @@
+{
+  "project_id": "fixture-inline-only",
+  "mode": "full",
+  "terminals": [
+    {
+      "id": "t-start",
+      "role": "start",
+      "lon": 39.0016011,
+      "lat": 55.94447649
+    },
+    {
+      "id": "t-end",
+      "role": "end",
+      "lon": 39.00768494,
+      "lat": 55.94285895
+    }
+  ],
+  "terrain": {
+    "elevation_raster": {
+      "path": "elevation_small.tif",
+      "crs": "EPSG:32637"
+    },
+    "zones": []
+  },
+  "options": {
+    "max_points": 50
+  }
+}

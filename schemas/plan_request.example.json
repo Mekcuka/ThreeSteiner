@@ -1,0 +1,133 @@
+{
+  "_comment": "Пример полей PlanRequest. Вектор из GIS — Shapefile (.shp); data/*.shp и elevation.tif — иллюстрация, не фикстуры; для прогона см. tests/fixtures/plan_request_synthetic.json",
+  "project_id": "550e8400-e29b-41d4-a716-446655440000",
+  "mode": "full",
+  "terminals": [
+    {
+      "id": "11111111-1111-1111-1111-111111111101",
+      "type": "oil_pad",
+      "role": "start",
+      "lon": 37.6,
+      "lat": 55.75,
+      "attachment_max_km": 0.2
+    },
+    {
+      "id": "22222222-2222-2222-2222-222222222201",
+      "type": "oil_pad",
+      "role": "intermediate",
+      "lon": 37.61,
+      "lat": 55.76,
+      "outgoing": {
+        "bearing_deg": 90,
+        "length_m": 40
+      }
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333333301",
+      "type": "gas_processing",
+      "role": "end",
+      "lon": 37.64,
+      "lat": 55.74
+    }
+  ],
+  "terrain": {
+    "elevation_raster": {
+      "path": "data/elevation.tif",
+      "crs": "EPSG:4326",
+      "nodata": -9999
+    },
+    "clip_buffer_km": 0.5,
+    "zones": [
+      {
+        "id": "ban-oopt-1",
+        "source": {
+          "type": "file",
+          "path": "data/ban_oopt.shp"
+        },
+        "mode": "ban",
+        "category": "protected_area"
+      },
+      {
+        "id": "penalty-swamp",
+        "geometry": {
+          "type": "FeatureCollection",
+          "features": [
+            {
+              "type": "Feature",
+              "properties": { "name": "Болото" },
+              "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                  [
+                    [37.605, 55.752],
+                    [37.615, 55.752],
+                    [37.615, 55.758],
+                    [37.605, 55.758],
+                    [37.605, 55.752]
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        "mode": "penalty",
+        "category": "swamp",
+        "buffer_m": 50
+      },
+      {
+        "id": "penalty-dry-land",
+        "mode": "penalty",
+        "category": "dry_land",
+        "buffer_m": 2,
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [37.610, 55.753],
+              [37.613, 55.753],
+              [37.613, 55.756],
+              [37.610, 55.756],
+              [37.610, 55.753]
+            ]
+          ]
+        }
+      },
+      {
+        "id": "ban-with-buffer",
+        "mode": "ban",
+        "buffer_m": 40,
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [37.608, 55.754],
+              [37.612, 55.754],
+              [37.612, 55.757],
+              [37.608, 55.757],
+              [37.608, 55.754]
+            ]
+          ]
+        }
+      }
+    ],
+    "corridors": {
+      "source": {
+        "type": "file",
+        "path": "data/roads.shp"
+      },
+      "cost_multiplier": 0.5
+    }
+  },
+  "options": {
+    "solver": "steinerpy",
+    "connector_max_km": 0.2,
+    "steiner_radius_km": 0.0,
+    "max_slope_deg": 30,
+    "slope_cost_factor": 1.0,
+    "normalize_terminal_leaves": true,
+    "edge_vertex_spacing_km": 0.0,
+    "max_points": 50,
+    "allow_terminal_in_zone_buffer": false,
+    "_euclid_options": "mode: euclid — euclid_routing, obstacle_buffer_m, allow_terminal_in_zone_buffer, euclid_steiner_candidates, geosteiner_home, steiner_candidate_spacing_m"
+  }
+}

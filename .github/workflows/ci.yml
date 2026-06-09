@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install GDAL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gdal-bin libgdal-dev g++
+
+      - name: Install package
+        run: pip install -e ".[dev]"
+
+      - name: Generate test fixtures
+        run: python tests/fixtures/generate_fixtures.py
+
+      - name: Run tests
+        run: pytest tests/ -q -m "not geosteiner and not slow"
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t topo-network .
+
+      - name: Smoke test container
+        run: |
+          docker run -d --name topo-api -p 8080:8080 topo-network
+          sleep 3
+          curl -sf http://localhost:8080/health
+          docker stop topo-api

@@ -1,86 +1,81 @@
-# Steiner Network Planner
+# topo_network — HTTP API планирования сети
 
-Python microservice that builds a **Euclidean Steiner tree** over map **terminals**. **Start** and **end** of the network are terminals with roles `start` and `end`; other objects use `intermediate`.
+Микросервис расчёта технологической сети по JSON **PlanRequest** → **PlanResponse**.
 
-## Model
+Поддерживаются режимы `full` (DEM + LCP), `euclid` (геометрия), зоны ban/penalty с категориями, обход препятствий (visibility graph), опционально GeoSteiner.
 
-| Layer | Points | Connection |
-|-------|--------|------------|
-| `steiner_tree` | all `terminals` + optional `steiner:*` | SMT; each terminal is a leaf (one incident edge) |
-| `terminals` | result rows | `role`, `via: tree`, `attached_to` = neighbor on the tree |
-
-Terminal IDs appear in `steiner_tree.edges` as `terminal:{uuid}`.
-
-## Quick start
+## Быстрый старт (локально)
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate   # Windows
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # Linux/macOS
 pip install -e ".[dev]"
-uvicorn network_planner.api:app --reload --port 8080
+python tests/fixtures/generate_fixtures.py   # GeoTIFF + Shapefile для тестов
+pytest tests/ -q -m "not geosteiner and not slow"
 ```
 
-Health: `GET http://localhost:8080/health`  
-Plan: `POST http://localhost:8080/v1/plan`
-
-## Request example
-
-```json
-{
-  "project_id": "550e8400-e29b-41d4-a716-446655440000",
-  "terminals": [
-    { "id": "11111111-1111-1111-1111-111111111101", "type": "oil_pad", "role": "start", "lon": 37.60, "lat": 55.75 },
-    { "id": "22222222-2222-2222-2222-222222222201", "type": "oil_pad", "role": "intermediate", "lon": 37.62, "lat": 55.76 },
-    { "id": "11111111-1111-1111-1111-111111111102", "type": "gas_processing", "role": "end", "lon": 37.64, "lat": 55.74 }
-  ],
-  "options": {
-    "connector_max_km": 0.2,
-    "max_points": 50
-  }
-}
-```
-
-Exactly one terminal with `role: "start"` and one with `role: "end"` is required.
-
-## Response (outline)
-
-- `steiner_tree` — tree over terminals (`steiner_points`, `edges`)
-- `terminals` — every object with `role`, `via`, `attached_to`, `length_m`
-- `warnings` — e.g. `smt_heuristic_mst`, `terminal_degree_violation`, `start_end_not_connected`
-- `total_length_m` — tree length
-
-## Algorithms
-
-| Terminals n | Method |
-|-------------|--------|
-| collinear | Star on line median (each leaf degree 1) |
-| 2 | Single edge (or collinear star) |
-| 3 | Torricelli–Simpson / collinear star |
-| 4 | Full SMT, 3 topologies |
-| 5 | Split 4+1 |
-| 6+ | Steiner star (centroid / line median) |
-
-## Demo by terminal count
+### HTTP API + UI
 
 ```bash
-python scripts/demo_terminal_counts.py
+python examples/serve_plan.py --host 0.0.0.0 --port 8080 --base-dir tests/fixtures
 ```
 
-Writes `examples/by_terminal_count/summary.json` (zigzag: first=start, last=end).
+| Endpoint | Описание |
+|----------|----------|
+| `GET /` | Leaflet-прототип (карта + JSON) |
+| `GET /health` | Проверка сервера |
+| `POST /plan` | PlanRequest → PlanResponse |
+| `GET /dev-fixtures/...` | Тестовые JSON (только dev) |
 
-## Tests
-
-```bash
-pytest
-```
+Относительные пути к GeoTIFF/файлам зон резолвятся от `X-Plan-Base-Dir` или env `TOPO_PLAN_BASE_DIR`.
 
 ## Docker
 
 ```bash
-docker build -t network-planner .
-docker run -p 8080:8080 network-planner
+docker build -t topo-network .
+docker run -p 8080:8080 -e TOPO_PLAN_BASE_DIR=/data -v /path/to/data:/data topo-network
 ```
 
-## API docs
+Образ содержит API и UI; данные (DEM, shapefile) монтируйте в `/data` или передавайте inline GeoJSON в запросе (режим `euclid`).
 
-OpenAPI UI: `http://localhost:8080/docs`
+## Пример запроса (euclid)
+
+```json
+{
+  "project_id": "demo",
+  "mode": "euclid",
+  "crs": { "work": "EPSG:32637" },
+  "terminals": [
+    { "id": "t1", "role": "start", "lon": 37.60, "lat": 55.75 },
+    { "id": "t2", "role": "end", "lon": 37.64, "lat": 55.74 }
+  ],
+  "options": { "euclid_routing": "obstacle" }
+}
+```
+
+Полные примеры: [`schemas/plan_request.example.json`](./schemas/plan_request.example.json).
+
+## OpenAPI
+
+После запуска: `http://localhost:8080/docs`
+
+## GeoSteiner (опционально)
+
+Для `options.euclid_steiner_candidates: true` нужны бинарники GeoSteiner (`efst`, `bb`):
+
+```bash
+export GEOSTEINER_HOME=/path/to/geosteiner-5.3
+```
+
+Без GeoSteiner расчёт не падает — в `warnings` будет `geosteiner_unavailable`.
+
+## Структура
+
+| Путь | Назначение |
+|------|------------|
+| `topo_network/` | Пакет: pipeline, API, euclid, export |
+| `examples/plan_prototype/` | Веб-UI |
+| `examples/serve_plan.py` | Запуск uvicorn (dev) |
+| `schemas/` | Примеры JSON |
+| `tests/` | pytest (фикстуры генерируются скриптом) |

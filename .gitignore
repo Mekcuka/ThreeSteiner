@@ -9,3 +9,11 @@ dist/
 *.egg-info/
 .coverage
 htmlcov/
+
+# Generated test binaries (CI runs tests/fixtures/generate_fixtures.py)
+tests/fixtures/elevation_small.tif
+tests/fixtures/*.shp
+tests/fixtures/*.shx
+tests/fixtures/*.dbf
+tests/fixtures/*.prj
+tests/fixtures/*.cpg

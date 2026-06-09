@@ -1,0 +1,2976 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>topo_network — прототип расчёта</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
+    crossorigin=""
+  />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --border: #2d3a4d;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3b82f6;
+      --ok: #22c55e;
+      --err: #ef4444;
+      --warn: #f59e0b;
+      --ban: #ef4444;
+      --dry-land: #84cc16;
+      --swamp: #a16207;
+      --floodplain: #0ea5e9;
+      --header-h: 40px;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      flex: 0 0 var(--header-h);
+      padding: 0 0.75rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    header h1 { margin: 0; font-size: 0.95rem; font-weight: 600; white-space: nowrap; }
+    header p { margin: 0; color: var(--muted); font-size: 0.68rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .layout {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(236px, 268px) minmax(0, 1fr) minmax(300px, 36vw);
+      overflow: hidden;
+    }
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(200px, 26vh) minmax(280px, 1fr) minmax(220px, 30vh);
+      }
+      .sidebar { order: 1; }
+      .map-wrap { order: 2; }
+      .exchange-panel { order: 3; border-left: none; border-top: 1px solid var(--border); }
+    }
+    .sidebar {
+      border-right: 1px solid var(--border);
+      padding: 0.35rem 0.45rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      min-height: 0;
+    }
+    .sidebar-main {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      padding-bottom: 0.35rem;
+    }
+    .sidebar-footer {
+      flex-shrink: 0;
+      padding-top: 0.35rem;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+    #btnRun {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.82rem;
+    }
+    .sidebar-footer .status.visible { margin-top: 0.3rem; }
+    .exchange-panel {
+      border-left: 1px solid var(--border);
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+    }
+    .exchange-header {
+      flex-shrink: 0;
+      padding: 0.4rem 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .exchange-tabs {
+      display: flex;
+      gap: 0.25rem;
+    }
+    .exchange-tab {
+      flex: 1;
+      padding: 0.38rem 0.45rem;
+      border: 1px solid var(--border);
+      border-radius: 6px 6px 0 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: none;
+    }
+    .exchange-tab .tab-dir {
+      opacity: 0.65;
+      font-weight: 500;
+      margin-right: 0.2rem;
+    }
+    .exchange-tab.active {
+      background: var(--bg);
+      color: var(--text);
+      border-color: var(--border);
+      box-shadow: inset 0 2px 0 var(--accent);
+    }
+    .exchange-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.35rem;
+      padding-bottom: 0.35rem;
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+    .http-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.12rem 0.45rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.62rem;
+      letter-spacing: 0.02em;
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .http-badge.idle { color: var(--muted); }
+    .http-badge.ok { color: var(--ok); border-color: rgba(34, 197, 94, 0.45); background: rgba(34, 197, 94, 0.12); }
+    .http-badge.err { color: var(--err); border-color: rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.12); }
+    .http-badge.loading { color: var(--accent); border-color: rgba(59, 130, 246, 0.45); background: rgba(59, 130, 246, 0.12); }
+    .exchange-pane {
+      flex: 1;
+      min-height: 0;
+      display: none;
+      flex-direction: column;
+      padding: 0.4rem 0.5rem 0.5rem;
+      gap: 0.35rem;
+    }
+    .exchange-pane.active { display: flex; }
+    .exchange-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+    .exchange-toolbar button { flex: 0 1 auto; }
+    .exchange-hint {
+      margin: 0;
+      font-size: 0.62rem;
+      color: var(--muted);
+      line-height: 1.35;
+      flex-shrink: 0;
+    }
+    .summary-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+    .summary-chip {
+      font-size: 0.62rem;
+      padding: 0.18rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .summary-chip.muted { color: var(--muted); }
+    .summary-chip.accent { border-color: rgba(59, 130, 246, 0.5); color: #93c5fd; }
+    .summary-chip.warn { border-color: rgba(245, 158, 11, 0.5); color: var(--warn); }
+    .json-editor {
+      flex: 1;
+      min-height: 120px;
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #0a0e14;
+      color: #e7ecf3;
+      font-family: "Cascadia Code", "Consolas", monospace;
+      font-size: 0.68rem;
+      line-height: 1.45;
+      resize: none;
+    }
+    .json-viewer-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #0a0e14;
+    }
+    .json-viewer-label {
+      flex-shrink: 0;
+      padding: 0.28rem 0.5rem;
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .json-viewer {
+      flex: 1;
+      margin: 0;
+      padding: 0.5rem;
+      overflow: auto;
+      font-family: "Cascadia Code", "Consolas", monospace;
+      font-size: 0.66rem;
+      line-height: 1.45;
+      white-space: pre;
+      tab-size: 2;
+    }
+    .json-viewer code { display: block; }
+    .json-placeholder { color: var(--muted); font-style: italic; white-space: pre-wrap; }
+    .json-key { color: #7dd3fc; }
+    .json-string { color: #86efac; }
+    .json-number { color: #fcd34d; }
+    .json-bool { color: #f472b6; }
+    .json-null { color: #94a3b8; }
+    .response-section {
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.35rem 0.45rem;
+      background: var(--panel);
+    }
+    .response-section summary {
+      cursor: pointer;
+      font-size: 0.65rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .response-section .metrics { margin-top: 0.35rem; }
+    .map-wrap {
+      position: relative;
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    #map { width: 100%; height: 100%; }
+    label { display: block; font-size: 0.65rem; color: var(--muted); margin-bottom: 0.15rem; }
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 0.3rem 0.45rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.75rem;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.35rem;
+      font-size: 0.72rem;
+      cursor: pointer;
+    }
+    .toggle-row input { width: auto; margin: 0; accent-color: var(--accent); }
+    textarea {
+      width: 100%;
+      flex: 1;
+      min-height: 56px;
+      padding: 0.4rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Cascadia Code", "Consolas", monospace;
+      font-size: 0.68rem;
+      resize: none;
+    }
+    .row { display: flex; gap: 0.3rem; flex-wrap: wrap; align-items: end; }
+    .row > * { flex: 1; min-width: 72px; }
+    button {
+      padding: 0.32rem 0.55rem;
+      border: none;
+      border-radius: 4px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.72rem;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    button.active {
+      background: var(--ok);
+      border-color: var(--ok);
+    }
+    button.danger {
+      background: transparent;
+      border: 1px solid var(--err);
+      color: var(--err);
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.45rem;
+      flex-shrink: 0;
+    }
+    .panel h2 {
+      margin: 0 0 0.3rem;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+    .hint {
+      margin: 0.25rem 0 0;
+      font-size: 0.62rem;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .post-process-grid {
+      display: grid;
+      gap: 0.3rem;
+      margin-top: 0.35rem;
+    }
+    .post-process-grid .toggle-row { margin-top: 0; }
+    .post-process-grid input[type="number"] {
+      width: 100%;
+      margin-top: 0.1rem;
+    }
+    .post-process-actions {
+      display: flex;
+      gap: 0.25rem;
+      margin-top: 0.35rem;
+      flex-wrap: wrap;
+    }
+    .post-process-actions button { flex: 1; min-width: 0; font-size: 0.65rem; }
+    .status {
+      padding: 0.3rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      display: none;
+      flex-shrink: 0;
+    }
+    .status.visible { display: block; }
+    .status.ok { background: rgba(34, 197, 94, 0.15); color: var(--ok); }
+    .status.err { background: rgba(239, 68, 68, 0.15); color: var(--err); }
+    .status.loading { background: rgba(59, 130, 246, 0.15); color: var(--accent); }
+    .status.warn { background: rgba(245, 158, 11, 0.15); color: var(--warn); }
+    .metrics dl {
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.15rem 0.6rem;
+      font-size: 0.72rem;
+    }
+    .metrics dt { color: var(--muted); }
+    .warnings {
+      margin: 0.5rem 0 0;
+      padding-left: 1.2rem;
+      font-size: 0.8rem;
+      color: var(--warn);
+    }
+    .legend {
+      position: absolute;
+      bottom: 22px;
+      left: 8px;
+      z-index: 1000;
+      background: rgba(26, 35, 50, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.3rem 0.45rem;
+      font-size: 0.62rem;
+      line-height: 1.45;
+      max-width: 168px;
+    }
+    .legend span {
+      display: inline-block;
+      width: 12px;
+      height: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .legend .edge { background: #3b82f6; }
+    .legend .connector { background: #06b6d4; height: 2px; border-top: 2px dashed #06b6d4; background: none; }
+    .legend .steiner { background: #f59e0b; width: 8px; height: 8px; border-radius: 50%; }
+    .legend .hub { background: #eab308; width: 8px; height: 8px; border-radius: 50%; border: 2px solid #fff; }
+    .legend .attach { background: #f97316; width: 8px; height: 8px; border-radius: 50%; }
+    .legend .radius-attach {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px dashed #06b6d4;
+      background: rgba(6, 182, 212, 0.15);
+    }
+    .legend .radius-repel {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px dashed #f97316;
+      background: rgba(249, 115, 22, 0.12);
+    }
+    .legend .terminal { background: #22c55e; width: 8px; height: 8px; border-radius: 50%; }
+    .legend .result-terminal { background: #22c55e; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #fff; }
+    .legend .ban {
+      background: rgba(239, 68, 68, 0.5);
+      width: 10px;
+      height: 10px;
+      border: 1px solid var(--ban);
+    }
+    .legend .ban-buffer {
+      background: rgba(245, 158, 11, 0.15);
+      width: 10px;
+      height: 10px;
+      border: 2px dashed #f59e0b;
+    }
+    .legend .dry-land {
+      background: rgba(132, 204, 22, 0.45);
+      width: 10px;
+      height: 10px;
+      border: 1px solid var(--dry-land);
+    }
+    .legend .swamp {
+      background: rgba(161, 98, 7, 0.45);
+      width: 10px;
+      height: 10px;
+      border: 1px solid var(--swamp);
+    }
+    .legend .floodplain {
+      background: rgba(14, 165, 233, 0.45);
+      width: 10px;
+      height: 10px;
+      border: 1px solid var(--floodplain);
+    }
+    .legend .dem {
+      background: transparent;
+      width: 10px;
+      height: 10px;
+      border: 2px dashed #a78bfa;
+    }
+    .leaflet-draw-toolbar a { background-image: url("https://unpkg.com/leaflet-draw@1.0.4/dist/images/spritesheet.svg"); }
+    .leaflet-draw-toolbar a { background-image: url("https://unpkg.com/leaflet-draw@1.0.4/dist/images/spritesheet.png"); }
+    .map-crosshair { cursor: crosshair !important; }
+    .terminal-marker-icon { background: transparent; border: none; width: auto !important; height: auto !important; }
+    .terminal-marker-wrap {
+      position: relative;
+      width: 18px;
+      height: 18px;
+    }
+    .terminal-marker-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.45);
+    }
+    .terminal-marker-label {
+      position: absolute;
+      left: 50%;
+      top: 20px;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 0 3px #000, 0 0 6px #000;
+      pointer-events: none;
+    }
+    .steps {
+      display: flex;
+      gap: 0.25rem;
+      margin: 0;
+      flex-wrap: nowrap;
+    }
+    .step {
+      flex: 1;
+      min-width: 0;
+      padding: 0.2rem 0.3rem;
+      border-radius: 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 0.58rem;
+      color: var(--muted);
+      line-height: 1.2;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .step:hover { border-color: var(--accent); }
+    .step.active { border-color: var(--accent); background: rgba(59, 130, 246, 0.12); }
+    .step strong { display: inline; color: var(--text); font-size: 0.6rem; margin-right: 0.15rem; }
+    .role-check {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.2rem;
+      margin-top: 0.25rem;
+    }
+    .role-chip {
+      font-size: 0.68rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .role-chip.ok { border-color: var(--ok); color: var(--ok); background: rgba(34, 197, 94, 0.1); }
+    .role-chip.bad { border-color: var(--err); color: var(--err); background: rgba(239, 68, 68, 0.1); }
+    .attachments {
+      margin: 0.5rem 0 0;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.72rem;
+    }
+    .attachments th, .attachments td {
+      text-align: left;
+      padding: 0.25rem 0.35rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .attachments th { color: var(--muted); font-weight: 600; }
+    .attachments code { font-size: 0.68rem; }
+    .sidebar-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.2rem;
+      margin: 0;
+    }
+    .sidebar-nav a {
+      font-size: 0.58rem;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0.12rem 0.35rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+    }
+    .sidebar-top {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+    .map-toolbar {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      max-width: 148px;
+    }
+    .map-toolbar-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      background: rgba(26, 35, 50, 0.94);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 3px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    .map-toolbar-group button {
+      padding: 2px 5px;
+      font-size: 0.58rem;
+      font-weight: 600;
+      line-height: 1.25;
+      min-width: 28px;
+      border-radius: 3px;
+    }
+    .map-toolbar-group button.icon-btn { min-width: 24px; padding: 2px 4px; }
+    .map-layers-pop {
+      padding: 4px 6px 5px;
+    }
+    .map-layers-pop label {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin: 0 0 0.15rem;
+      font-size: 0.58rem;
+      cursor: pointer;
+    }
+    .map-layers-pop summary {
+      list-style: none;
+      cursor: pointer;
+    }
+    .map-layers-pop summary::-webkit-details-marker { display: none; }
+    .map-coords {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 0.2rem 0.5rem;
+      background: rgba(15, 20, 25, 0.88);
+      border-top: 1px solid var(--border);
+      font-size: 0.58rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+    .sidebar-nav a:hover { color: var(--text); border-color: var(--accent); }
+    .legend.collapsed .legend-body { display: none; }
+    .legend-toggle {
+      cursor: pointer;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      user-select: none;
+    }
+    .map-wrap:fullscreen { background: var(--bg); }
+    .map-wrap:fullscreen #map { min-height: 100vh; }
+    .leaflet-control-scale-line {
+      border-color: var(--muted) !important;
+      color: var(--text) !important;
+      background: rgba(26, 35, 50, 0.85) !important;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>topo_network — прототип расчёта</h1>
+    <p>Карта · JSON запроса/ответа · POST /plan</p>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-main">
+      <div class="sidebar-top">
+        <nav class="sidebar-nav" aria-label="Разделы">
+          <a href="#panel-settings">⚙</a>
+          <a href="#panel-editor">📍</a>
+          <a href="#panel-preset">📋</a>
+          <a href="#exchangePanel" data-tab-link="request">→ JSON</a>
+          <a href="#exchangePanel" data-tab-link="response">← JSON</a>
+        </nav>
+        <div class="steps" id="workflowSteps">
+          <div class="step active" data-target="panel-editor"><strong>1</strong>Карта</div>
+          <div class="step" data-target="panel-settings"><strong>2</strong>Опции</div>
+          <div class="step" data-tab="request"><strong>3</strong>Запрос</div>
+          <div class="step" data-tab="response"><strong>4</strong>Ответ</div>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-settings">
+        <h2>Настройки</h2>
+        <label for="apiUrl">URL API</label>
+        <input type="text" id="apiUrl" value="/plan" />
+        <label for="baseDir">Base-Dir</label>
+        <input type="text" id="baseDir" placeholder="tests\fixtures" />
+        <label class="toggle-row" for="useElevationRaster">
+          <input type="checkbox" id="useElevationRaster" />
+          DEM · mode full
+        </label>
+        <label class="toggle-row" for="euclidObstacleRouting">
+          <input type="checkbox" id="euclidObstacleRouting" checked />
+          Обход ban в euclid (visibility graph)
+        </label>
+        <label class="toggle-row" for="euclidSteinerCandidates">
+          <input type="checkbox" id="euclidSteinerCandidates" checked />
+          GeoSteiner кандидаты (euclid)
+        </label>
+        <p class="hint">
+          <code>options.euclid_steiner_candidates</code> — точки ESMT через
+          <code>efst|bb</code> (env <code>GEOSTEINER_HOME</code>); без бинарников — warning.
+        </p>
+        <h2 style="margin-top:0.5rem;font-size:0.65rem">Зоны ban / penalty</h2>
+        <div>
+          <label for="optZoneBufferM">buffer_m (м)</label>
+          <input type="number" id="optZoneBufferM" min="0" step="1" value="0" />
+        </div>
+        <label class="toggle-row" for="optAllowTerminalInBuffer" style="margin-top:0.25rem">
+          <input type="checkbox" id="optAllowTerminalInBuffer" />
+          allow_terminal_in_zone_buffer
+        </label>
+        <p class="hint">
+          <code>terrain.zones[].buffer_m</code> — отступ трассы (оранжевый контур на карте).
+          <code>allow_terminal_in_zone_buffer</code> — терминал в кольце buffer разрешён; в core ban
+          (красный) — по-прежнему 422.
+        </p>
+        <h2 style="margin-top:0.5rem;font-size:0.65rem">Post-process</h2>
+        <div class="post-process-grid" id="postProcessGrid">
+          <label class="toggle-row" for="optNormalizeLeaves">
+            <input type="checkbox" id="optNormalizeLeaves" />
+            normalize_terminal_leaves
+          </label>
+          <label class="toggle-row" for="optEnforceAttachment">
+            <input type="checkbox" id="optEnforceAttachment" />
+            enforce_attachment_radius
+          </label>
+          <div>
+            <label for="optEdgeSpacing">edge_vertex_spacing_km</label>
+            <input type="number" id="optEdgeSpacing" min="0" step="0.001" value="0" />
+          </div>
+          <div>
+            <label for="optConnectorMax">connector_max_km</label>
+            <input type="number" id="optConnectorMax" min="0" step="0.01" value="0.2" />
+          </div>
+          <div>
+            <label for="optSteinerRadius">steiner_radius_km</label>
+            <input type="number" id="optSteinerRadius" min="0" step="0.001" value="0" />
+          </div>
+        </div>
+        <label class="toggle-row" for="showRadiiOnMap" style="margin-top:0.35rem">
+          <input type="checkbox" id="showRadiiOnMap" checked />
+          Радиусы на карте (attach / repel)
+        </label>
+        <div class="post-process-actions">
+          <button type="button" class="secondary" id="btnPostProcessClean">Чистое Steiner</button>
+          <button type="button" class="secondary" id="btnPostProcessDefault">По умолчанию API</button>
+        </div>
+        <p class="hint">
+          «Чистое Steiner»: hub/attach выкл., spacing и repel = 0.
+          Круги: <strong>голубой</strong> — <code>connector_max_km</code> (если enforce),
+          <strong>оранжевый</strong> — <code>steiner_radius_km</code> (repel).
+        </p>
+      </div>
+
+      <div class="panel" id="panel-editor">
+        <h2>Редактор</h2>
+        <div class="row">
+          <div style="flex:1">
+            <label for="terminalRole">Роль</label>
+            <select id="terminalRole">
+              <option value="intermediate" selected>intermediate</option>
+              <option value="start">start</option>
+              <option value="end">end</option>
+              <option value="branch">branch</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top: 0.3rem">
+          <div style="flex:1">
+            <label for="terminalOutgoingBearing">outgoing bearing°</label>
+            <input type="number" id="terminalOutgoingBearing" step="any" placeholder="опц." />
+          </div>
+          <div style="flex:1">
+            <label for="terminalOutgoingLength">length m</label>
+            <input type="number" id="terminalOutgoingLength" step="any" min="0" placeholder="опц." />
+          </div>
+        </div>
+        <p class="hint" style="margin-top:0.2rem">Оба поля — для нового терминала; 0° север, 90° восток.</p>
+        <div class="row" style="margin-top: 0.3rem">
+          <button type="button" class="secondary" id="btnPlaceTerminal">+ терминал</button>
+          <button type="button" class="secondary" id="btnDrawBan">+ ban</button>
+        </div>
+        <div class="row" style="margin-top: 0.25rem">
+          <button type="button" class="secondary" id="btnDrawDryLand">+ суходол</button>
+          <button type="button" class="secondary" id="btnDrawSwamp">+ болото</button>
+          <button type="button" class="secondary" id="btnDrawFloodplain">+ пойма</button>
+        </div>
+        <div class="row" style="margin-top: 0.25rem">
+          <button type="button" class="danger secondary" id="btnClearTerminals">✕ терм.</button>
+          <button type="button" class="danger secondary" id="btnClearZones">✕ зоны</button>
+        </div>
+        <div class="role-check" id="roleCheck"></div>
+        <div class="row" style="margin-top: 0.25rem">
+          <button type="button" class="secondary" id="btnJsonToMap">JSON→карта</button>
+          <button type="button" class="secondary" id="btnMapToJson">карта→JSON</button>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-preset">
+        <h2>Пресет</h2>
+        <select id="preset">
+          <option value="">— выберите —</option>
+          <option value="/dev-fixtures/plan_request_euclid.json">euclid</option>
+          <option value="/dev-fixtures/plan_request_euclid_zones.json">euclid_zones</option>
+          <option value="/dev-fixtures/plan_request_synthetic.json">synthetic</option>
+          <option value="/dev-fixtures/plan_request_synthetic_shp.json">synthetic_shp</option>
+        </select>
+        <div class="row" style="margin-top: 0.25rem">
+          <button type="button" class="secondary" id="btnLoad">Загрузить</button>
+          <button type="button" class="secondary" id="btnFormat">Формат JSON</button>
+        </div>
+      </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button type="button" id="btnRun">Рассчитать</button>
+        <div id="status" class="status"></div>
+      </div>
+    </aside>
+
+    <main class="map-wrap" id="mapWrap">
+      <div id="map"></div>
+      <div class="map-toolbar" id="mapToolbar">
+        <div class="map-toolbar-group" title="Инструменты · T B Esc F">
+          <button type="button" class="secondary icon-btn" id="mapBtnTerminal" title="Терминал (T)">T</button>
+          <button type="button" class="secondary icon-btn" id="mapBtnBan" title="Ban (B)">B</button>
+          <button type="button" class="secondary icon-btn" id="mapBtnCancel" title="Отмена (Esc)">✕</button>
+          <button type="button" class="secondary icon-btn" id="mapBtnFullscreen" title="Fullscreen (F)">⛶</button>
+        </div>
+        <div class="map-toolbar-group" title="Центрирование · 1–4">
+          <button type="button" class="secondary icon-btn" id="mapBtnFitEditor" title="Редактор (1)">1</button>
+          <button type="button" class="secondary icon-btn" id="mapBtnFitDem" title="DEM (2)">2</button>
+          <button type="button" class="secondary icon-btn" id="mapBtnFitResult" title="Сеть (3)">3</button>
+          <button type="button" class="secondary icon-btn" id="mapBtnFitAll" title="Всё (4)">4</button>
+          <button type="button" class="secondary icon-btn" id="mapBtnHome" title="Обзор">⌂</button>
+        </div>
+        <details class="map-toolbar-group map-layers-pop">
+          <summary style="cursor:pointer;font-size:0.58rem;padding:1px 2px;color:var(--muted)">Слои</summary>
+          <label><input type="checkbox" id="layerEditor" checked /> терминалы</label>
+          <label><input type="checkbox" id="layerRadii" checked /> радиусы</label>
+          <label><input type="checkbox" id="layerZones" checked /> зоны + buffer_m</label>
+          <label><input type="checkbox" id="layerResult" checked /> сеть</label>
+          <label><input type="checkbox" id="layerDem" checked /> DEM</label>
+        </details>
+      </div>
+      <div class="legend collapsed" id="mapLegend">
+        <div class="legend-toggle" id="legendToggle">Легенда ▸</div>
+        <div class="legend-body">
+          <div><span class="ban"></span>ban</div>
+          <div><span class="dry-land"></span>суходол ×1</div>
+          <div><span class="swamp"></span>болото ×2</div>
+          <div><span class="floodplain"></span>пойма ×3</div>
+          <div><span class="ban-buffer"></span>buffer_m</div>
+          <div><span class="terminal"></span>терминал</div>
+          <div><span class="edge"></span>магистраль</div>
+          <div><span class="connector"></span>connector</div>
+          <div><span class="radius-attach"></span>connector_max_km</div>
+          <div><span class="radius-repel"></span>steiner_radius_km</div>
+          <div><span class="dem"></span>DEM</div>
+        </div>
+      </div>
+      <div class="map-coords" id="mapCoords">
+        <span id="coordsText">—</span>
+        <span id="zoomText">z—</span>
+      </div>
+    </main>
+
+    <aside class="exchange-panel" id="exchangePanel">
+      <div class="exchange-header">
+        <div class="exchange-tabs" role="tablist" aria-label="JSON обмена с API">
+          <button type="button" class="exchange-tab active" data-tab="request" role="tab" aria-selected="true">
+            <span class="tab-dir">POST →</span>Запрос
+          </button>
+          <button type="button" class="exchange-tab" data-tab="response" role="tab" aria-selected="false">
+            <span class="tab-dir">←</span>Ответ
+          </button>
+        </div>
+        <div class="exchange-status">
+          <span class="http-badge idle" id="httpBadge">ожидание</span>
+          <span id="exchangeTiming"></span>
+          <span id="exchangeSize"></span>
+        </div>
+      </div>
+
+      <div class="exchange-pane active" id="pane-request" role="tabpanel">
+        <div class="exchange-toolbar">
+          <button type="button" class="secondary" id="btnCopyRequest">Копировать</button>
+          <button type="button" class="secondary" id="btnFormatRequest">Формат</button>
+          <button type="button" class="secondary" id="btnSyncRequestPreview">С карты → JSON</button>
+          <button type="button" class="secondary" id="btnApplyJsonToMap">JSON → карта</button>
+        </div>
+        <div class="summary-chips" id="requestSummary"></div>
+        <p class="exchange-hint">
+          Тело <code>POST /plan</code>. Перед расчётом карта и опции сливаются в этот JSON.
+        </p>
+        <textarea id="requestJson" spellcheck="false" class="json-editor" aria-label="PlanRequest JSON"></textarea>
+      </div>
+
+      <div class="exchange-pane" id="pane-response" role="tabpanel" hidden>
+        <div class="exchange-toolbar">
+          <button type="button" class="secondary" id="btnCopyResponse">Копировать JSON</button>
+          <button type="button" class="secondary" id="btnDownloadResponse">Скачать .json</button>
+          <button type="button" class="secondary" id="btnFitResult">На карте</button>
+          <button type="button" class="secondary" id="btnClearResult">Очистить</button>
+        </div>
+        <div class="summary-chips" id="responseSummary"></div>
+        <details class="response-section" open id="responseMetricsSection">
+          <summary>Сводка PlanResponse</summary>
+          <dl class="metrics" id="metrics"></dl>
+          <table class="attachments" id="attachmentsTable" hidden>
+            <thead>
+              <tr><th>Терминал</th><th>role</th><th>via</th><th>attached_to</th></tr>
+            </thead>
+            <tbody id="attachmentsBody"></tbody>
+          </table>
+          <ul class="warnings" id="warnings" hidden></ul>
+        </details>
+        <div class="json-viewer-wrap">
+          <div class="json-viewer-label">PlanResponse · тело ответа</div>
+          <pre class="json-viewer" id="responseJsonViewer"><code id="responseJsonCode" class="json-placeholder">Нажмите «Рассчитать» — здесь появится JSON ответа API (200 или 422).</code></pre>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js" crossorigin=""></script>
+  <script src="https://unpkg.com/@turf/turf@7.2.0/turf.min.js" crossorigin=""></script>
+  <script>
+    const ROLE_COLORS = {
+      start: "#22c55e",
+      end: "#ef4444",
+      intermediate: "#a855f7",
+      branch: "#06b6d4",
+    };
+
+    const HOME_VIEW = { center: [55.94, 39.0], zoom: 14 };
+
+    const map = L.map("map", { zoomControl: true }).setView(HOME_VIEW.center, HOME_VIEW.zoom);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap",
+      maxZoom: 19,
+    }).addTo(map);
+    L.control.scale({ imperial: false, position: "bottomright" }).addTo(map);
+    map.zoomControl.setPosition("bottomright");
+
+    const resultLayer = L.layerGroup().addTo(map);
+    const editTerminals = L.layerGroup().addTo(map);
+    const editZones = L.featureGroup().addTo(map);
+    const zoneBufferLayer = L.layerGroup().addTo(map);
+    const demBoundsLayer = L.layerGroup().addTo(map);
+    const radiusLayer = L.layerGroup().addTo(map);
+
+    let lastResultBounds = null;
+
+    /** elevation_small.tif — demo_scene 500×400 m (fixtures) */
+    const FIXTURE_DEM_BOUNDS = {
+      south: 55.94178099,
+      west: 39.0,
+      north: 55.945375,
+      east: 39.00800567,
+    };
+
+    function usesFixtureDem(req) {
+      return (
+        el("useElevationRaster").checked &&
+        req?.mode === "full" &&
+        req?.terrain?.elevation_raster?.path === "elevation_small.tif"
+      );
+    }
+
+    function terminalInsideFixtureDem(lon, lat) {
+      const b = FIXTURE_DEM_BOUNDS;
+      return lat >= b.south && lat <= b.north && lon >= b.west && lon <= b.east;
+    }
+
+    function updateDemBoundsOverlay(req) {
+      demBoundsLayer.clearLayers();
+      if (!usesFixtureDem(req)) return;
+      const b = FIXTURE_DEM_BOUNDS;
+      L.rectangle(
+        [
+          [b.south, b.west],
+          [b.north, b.east],
+        ],
+        {
+          color: "#a78bfa",
+          weight: 2,
+          dashArray: "6 4",
+          fillOpacity: 0.05,
+          fillColor: "#a78bfa",
+        },
+      )
+        .bindPopup("Граница <code>elevation_small.tif</code><br>Терминалы вне прямоугольника → <code>raster_extent</code>")
+        .addTo(demBoundsLayer);
+    }
+
+    function validateTerminalsInDem(req) {
+      if (!usesFixtureDem(req)) return null;
+      const outside = (req.terminals || []).filter(
+        (t) => t.lon != null && t.lat != null && !terminalInsideFixtureDem(t.lon, t.lat),
+      );
+      if (!outside.length) return null;
+      const ids = outside.map((t) => t.id).join(", ");
+      return (
+        `Терминал(ы) ${ids} вне DEM elevation_small.tif. ` +
+        `Поставьте точки внутри фиолетового прямоугольника или загрузите пресет synthetic. ` +
+        `Либо mode: euclid (без DEM).`
+      );
+    }
+
+    const drawControl = new L.Control.Draw({
+      position: "topright",
+      edit: {
+        featureGroup: editZones,
+        edit: true,
+        remove: true,
+      },
+      draw: {
+        polygon: {
+          allowIntersection: false,
+          showArea: false,
+          shapeOptions: {
+            color: "#ef4444",
+            fillColor: "#ef4444",
+            fillOpacity: 0.35,
+            weight: 2,
+          },
+        },
+        polyline: false,
+        rectangle: false,
+        circle: false,
+        marker: false,
+        circlemarker: false,
+      },
+    });
+    map.addControl(drawControl);
+
+    const el = (id) => document.getElementById(id);
+    const statusEl = el("status");
+    const metricsDl = el("metrics");
+    const warningsUl = el("warnings");
+    const requestJson = el("requestJson");
+    const responseJsonCode = el("responseJsonCode");
+    const httpBadge = el("httpBadge");
+    const exchangeTiming = el("exchangeTiming");
+    const exchangeSize = el("exchangeSize");
+    const requestSummary = el("requestSummary");
+    const responseSummary = el("responseSummary");
+    const btnRun = el("btnRun");
+    const btnPlaceTerminal = el("btnPlaceTerminal");
+    const roleCheckEl = el("roleCheck");
+    const attachmentsTable = el("attachmentsTable");
+    const attachmentsBody = el("attachmentsBody");
+
+    let lastResponseData = null;
+    let lastResponseOk = false;
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function highlightJson(value) {
+      const json = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+      return escapeHtml(json).replace(
+        /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        (match) => {
+          let cls = "json-number";
+          if (/^"/.test(match)) {
+            cls = /:$/.test(match) ? "json-key" : "json-string";
+          } else if (/true|false/.test(match)) {
+            cls = "json-bool";
+          } else if (/null/.test(match)) {
+            cls = "json-null";
+          }
+          return `<span class="${cls}">${match}</span>`;
+        },
+      );
+    }
+
+    function formatBytes(n) {
+      if (n < 1024) return n + " B";
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+      return (n / (1024 * 1024)).toFixed(2) + " MB";
+    }
+
+    function switchExchangeTab(tabName) {
+      document.querySelectorAll(".exchange-tab").forEach((btn) => {
+        const active = btn.dataset.tab === tabName;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      el("pane-request").classList.toggle("active", tabName === "request");
+      el("pane-request").hidden = tabName !== "request";
+      el("pane-response").classList.toggle("active", tabName === "response");
+      el("pane-response").hidden = tabName !== "response";
+    }
+
+    function setExchangeMeta({ status, kind, elapsedMs, reqBytes, respBytes }) {
+      httpBadge.textContent = status != null ? "HTTP " + status : "ожидание";
+      httpBadge.className = "http-badge " + (kind || "idle");
+      exchangeTiming.textContent =
+        elapsedMs != null ? elapsedMs.toLocaleString("ru-RU") + " ms" : "";
+      const parts = [];
+      if (reqBytes != null) parts.push("→ " + formatBytes(reqBytes));
+      if (respBytes != null) parts.push("← " + formatBytes(respBytes));
+      exchangeSize.textContent = parts.join(" · ");
+    }
+
+    function renderSummaryChips(container, chips) {
+      container.innerHTML = chips
+        .map(
+          (c) =>
+            `<span class="summary-chip ${c.cls || ""}">${escapeHtml(c.label)}</span>`,
+        )
+        .join("");
+    }
+
+    function updateRequestSummary(req) {
+      if (!req) {
+        renderSummaryChips(requestSummary, [{ label: "нет данных", cls: "muted" }]);
+        return;
+      }
+      const terminals = req.terminals || [];
+      const zones = (req.terrain?.zones || []).filter((z) => z.geometry || z.source);
+      const banCount = zones.filter((z) => (z.mode || "ban") === "ban").length;
+      const penaltyCount = zones.length - banCount;
+      const jsonText = JSON.stringify(req);
+      const chips = [
+        { label: req.mode || "mode ?", cls: "accent" },
+        { label: terminals.length + " терм.", cls: terminals.length >= 2 ? "" : "warn" },
+        {
+          label: banCount + " ban" + (penaltyCount ? ", " + penaltyCount + " penalty" : ""),
+          cls: zones.length ? "warn" : "muted",
+        },
+        { label: req.options?.solver || "steinerpy", cls: "muted" },
+        { label: formatBytes(new TextEncoder().encode(jsonText).length), cls: "muted" },
+      ];
+      if (req.mode === "euclid") {
+        chips.splice(3, 0, {
+          label: req.options?.euclid_routing === "direct" ? "direct" : "obstacle",
+          cls: "accent",
+        });
+      }
+      if (req.options?.normalize_terminal_leaves === false) {
+        chips.push({ label: "no hub", cls: "muted" });
+      }
+      if (req.options?.enforce_attachment_radius === false) {
+        chips.push({ label: "no attach", cls: "muted" });
+      }
+      if ((req.options?.edge_vertex_spacing_km || 0) > 0) {
+        chips.push({
+          label: "spacing " + req.options.edge_vertex_spacing_km + " km",
+          cls: "warn",
+        });
+      }
+      if ((req.options?.steiner_radius_km || 0) > 0) {
+        chips.push({
+          label: "repel " + req.options.steiner_radius_km + " km",
+          cls: "warn",
+        });
+      }
+      if (
+        req.options?.enforce_attachment_radius !== false &&
+        (req.options?.connector_max_km ?? 0.2) > 0
+      ) {
+        chips.push({
+          label: "attach " + (req.options?.connector_max_km ?? 0.2) + " km",
+          cls: "muted",
+        });
+      }
+      const zoneBuffers = (req.terrain?.zones || [])
+        .map((z) => (z.buffer_m != null && Number(z.buffer_m) > 0 ? Number(z.buffer_m) : null))
+        .filter((v) => v != null);
+      if (zoneBuffers.length) {
+        const unique = [...new Set(zoneBuffers)];
+        const label =
+          unique.length === 1
+            ? "buffer_m " + unique[0] + " m"
+            : "buffer_m " + unique.join("/") + " m";
+        chips.push({ label, cls: "warn" });
+      }
+      if (req.options?.allow_terminal_in_zone_buffer) {
+        chips.push({ label: "term. in buffer", cls: "accent" });
+      }
+      renderSummaryChips(requestSummary, chips);
+    }
+
+    function renderResponseSummary(data, ok) {
+      if (!ok) {
+        const code = data.errors?.[0]?.code || "error";
+        renderSummaryChips(responseSummary, [
+          { label: code, cls: "warn" },
+          { label: (data.errors?.length || 0) + " ошибок", cls: "warn" },
+        ]);
+        return;
+      }
+      const edges = data.network_tree?.edges || [];
+      const connectors = edges.filter((e) => classifyEdge(e) === "connector").length;
+      renderSummaryChips(responseSummary, [
+        { label: data.project_id || "—", cls: "accent" },
+        { label: edges.length + " рёбер", cls: "" },
+        { label: connectors + " connector", cls: connectors ? "warn" : "muted" },
+        { label: (data.warnings?.length || 0) + " warn", cls: data.warnings?.length ? "warn" : "muted" },
+      ]);
+    }
+
+    async function copyText(text, okMessage) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus(okMessage || "Скопировано", "ok");
+      } catch (e) {
+        setStatus("Копирование: " + e.message, "err");
+      }
+    }
+
+    function renderResponseJson(data) {
+      responseJsonCode.className = "";
+      responseJsonCode.innerHTML = highlightJson(data);
+    }
+
+    function clearResponsePanel() {
+      lastResponseData = null;
+      lastResponseOk = false;
+      metricsDl.innerHTML = "";
+      attachmentsBody.innerHTML = "";
+      attachmentsTable.hidden = true;
+      warningsUl.hidden = true;
+      warningsUl.innerHTML = "";
+      responseSummary.innerHTML = "";
+      responseJsonCode.className = "json-placeholder";
+      responseJsonCode.textContent =
+        "Нажмите «Рассчитать» — здесь появится JSON ответа API (200 или 422).";
+      setExchangeMeta({});
+    }
+
+    let terminalPlaceMode = false;
+    let terminalCounter = 0;
+    let zoneCounter = 0;
+    /** Кэш ban-полигонов с карты (на случай сбоев Leaflet eachLayer). */
+    let storedDrawnZones = [];
+    /** Режим следующего нарисованного полигона: ban или penalty+category. */
+    let pendingZoneDraw = { mode: "ban" };
+
+    const PENALTY_CATEGORIES = {
+      dry_land: { label: "суходол", multiplier: 1, color: "#84cc16", fillOpacity: 0.3 },
+      swamp: { label: "болото", multiplier: 2, color: "#a16207", fillOpacity: 0.35 },
+      floodplain: { label: "пойма", multiplier: 3, color: "#0ea5e9", fillOpacity: 0.35 },
+    };
+
+    function getZoneBufferM() {
+      const value = parseFloat(el("optZoneBufferM").value);
+      return Number.isFinite(value) && value > 0 ? value : 0;
+    }
+
+    function getZoneBufferMFromRequest(req) {
+      const fromUi = getZoneBufferM();
+      if (fromUi > 0) return fromUi;
+      const zones = req?.terrain?.zones || [];
+      const found = zones.find((z) => z.buffer_m != null && Number(z.buffer_m) > 0);
+      return found ? Number(found.buffer_m) : 0;
+    }
+
+    function applyZoneBufferToAllZones(req) {
+      const zones = req?.terrain?.zones;
+      if (!zones?.length) return;
+      const bufferM = getZoneBufferM();
+      for (const zone of zones) {
+        if (bufferM > 0) {
+          zone.buffer_m = bufferM;
+        } else {
+          delete zone.buffer_m;
+        }
+      }
+    }
+
+    function syncZoneBufferFromRequest(req) {
+      el("optZoneBufferM").value = String(getZoneBufferMFromRequest(req));
+    }
+
+    function syncAllowTerminalInBufferFromRequest(req) {
+      el("optAllowTerminalInBuffer").checked = Boolean(
+        req?.options?.allow_terminal_in_zone_buffer,
+      );
+    }
+
+    function applyAllowTerminalInBufferToRequest(req) {
+      if (!req.options) req.options = {};
+      if (el("optAllowTerminalInBuffer").checked) {
+        req.options.allow_terminal_in_zone_buffer = true;
+      } else {
+        delete req.options.allow_terminal_in_zone_buffer;
+      }
+    }
+
+    function zoneBufferMFromMeta(meta) {
+      const value = meta?.buffer_m != null ? Number(meta.buffer_m) : getZoneBufferM();
+      return Number.isFinite(value) && value > 0 ? value : 0;
+    }
+
+    function zoneStyleFromMeta(meta) {
+      if (meta?.mode === "penalty" && meta.category && PENALTY_CATEGORIES[meta.category]) {
+        const cat = PENALTY_CATEGORIES[meta.category];
+        return {
+          color: cat.color,
+          fillColor: cat.color,
+          fillOpacity: cat.fillOpacity,
+          weight: 2,
+        };
+      }
+      return {
+        color: "#ef4444",
+        fillColor: "#ef4444",
+        fillOpacity: 0.35,
+        weight: 2,
+      };
+    }
+
+    function bindZonePopup(layer) {
+      const meta = layer.zoneMeta || {};
+      const bufferM = zoneBufferMFromMeta(meta);
+      const cat = meta.category && PENALTY_CATEGORIES[meta.category];
+      const lines = [
+        `<strong>${escapeHtml(meta.id || "ban")}</strong>`,
+        `mode: ${escapeHtml(meta.mode || "ban")}`,
+      ];
+      if (cat) {
+        lines.push(`category: ${escapeHtml(meta.category)} (${cat.label}, ×${cat.multiplier})`);
+      } else if (meta.mode === "penalty" && meta.multiplier != null) {
+        lines.push(`multiplier: ${meta.multiplier}`);
+      }
+      lines.push(
+        bufferM > 0
+          ? `terrain.zones[].buffer_m: <strong>${bufferM}</strong> m`
+          : "terrain.zones[].buffer_m: —",
+      );
+      if (bufferM > 0) {
+        if (meta.mode === "ban") {
+          lines.push(
+            "красный = core ban (терминал запрещён); оранжевый = запрет трасс",
+          );
+        } else {
+          lines.push("цветной = core penalty; оранжевый = зона удорожания трасс");
+        }
+      }
+      layer.bindPopup(lines.join("<br>"));
+    }
+
+    function createZoneLayer(latlngs, zoneMeta) {
+      const poly = L.polygon(latlngs, zoneStyleFromMeta(zoneMeta));
+      poly.zoneMeta = zoneMeta;
+      bindZonePopup(poly);
+      return poly;
+    }
+
+    function bufferedZonePolygons(geometry, bufferM) {
+      if (!geometry || bufferM <= 0 || typeof turf === "undefined") return [];
+      try {
+        const buffered = turf.buffer(
+          { type: "Feature", geometry, properties: {} },
+          bufferM,
+          { units: "meters" },
+        );
+        const geom = buffered.geometry;
+        if (geom.type === "Polygon") return [geom.coordinates];
+        if (geom.type === "MultiPolygon") return geom.coordinates;
+      } catch (e) {
+        /* ignore invalid geometry */
+      }
+      return [];
+    }
+
+    function syncZoneBufferLayerVisibility() {
+      if (map.hasLayer(editZones)) {
+        if (!map.hasLayer(zoneBufferLayer)) map.addLayer(zoneBufferLayer);
+      } else {
+        map.removeLayer(zoneBufferLayer);
+      }
+    }
+
+    function updateZoneBufferOverlay() {
+      zoneBufferLayer.clearLayers();
+      syncZoneBufferLayerVisibility();
+      if (!map.hasLayer(zoneBufferLayer)) return;
+
+      editZones.eachLayer((layer) => {
+        const bufferM = zoneBufferMFromMeta(layer.zoneMeta);
+        if (bufferM <= 0 || typeof layer.toGeoJSON !== "function") return;
+
+        let geometry;
+        try {
+          geometry = layer.toGeoJSON().geometry;
+        } catch (e) {
+          return;
+        }
+
+        for (const polyCoords of bufferedZonePolygons(geometry, bufferM)) {
+          const outer = polyCoords[0].map(([lon, lat]) => [lat, lon]);
+          const holes = polyCoords.slice(1).map((ring) => ring.map(([lon, lat]) => [lat, lon]));
+          const bufferedPoly = L.polygon(holes.length ? [outer, ...holes] : outer, {
+            color: "#f59e0b",
+            weight: 2,
+            dashArray: "6 4",
+            fillColor: "#f59e0b",
+            fillOpacity: 0.1,
+            interactive: false,
+          });
+          zoneBufferLayer.addLayer(bufferedPoly);
+        }
+      });
+    }
+
+    function syncZoneBufferToZoneLayers() {
+      const bufferM = getZoneBufferM();
+      editZones.eachLayer((layer) => {
+        if (!layer.zoneMeta) layer.zoneMeta = {};
+        if (bufferM > 0) {
+          layer.zoneMeta.buffer_m = bufferM;
+        } else {
+          delete layer.zoneMeta.buffer_m;
+        }
+        bindZonePopup(layer);
+      });
+      updateZoneBufferOverlay();
+    }
+
+    function zoneFromLayer(layer) {
+      const zoneId = layer.zoneMeta?.id || "ban-drawn";
+      let geometry;
+      if (typeof layer.toGeoJSON === "function") {
+        geometry = layer.toGeoJSON().geometry;
+      } else {
+        const latlngs = layer.getLatLngs();
+        const ring = Array.isArray(latlngs[0]) ? latlngs[0] : latlngs;
+        geometry = ringToGeoJSON(ring);
+      }
+      const zone = {
+        id: zoneId,
+        geometry,
+        mode: layer.zoneMeta?.mode || "ban",
+      };
+      if (zone.mode === "penalty") {
+        if (layer.zoneMeta?.category) {
+          zone.category = layer.zoneMeta.category;
+        } else if (layer.zoneMeta?.multiplier != null) {
+          zone.multiplier = layer.zoneMeta.multiplier;
+        }
+      }
+      const bufferM =
+        layer.zoneMeta?.buffer_m != null ? Number(layer.zoneMeta.buffer_m) : getZoneBufferM();
+      if (Number.isFinite(bufferM) && bufferM > 0) {
+        zone.buffer_m = bufferM;
+      }
+      return zone;
+    }
+
+    function rebuildStoredDrawnZones() {
+      storedDrawnZones = [];
+      editZones.eachLayer((layer) => {
+        storedDrawnZones.push(zoneFromLayer(layer));
+      });
+    }
+
+    function updateRoleCheck(terminals) {
+      const list = terminals || [];
+      const starts = list.filter((t) => t.role === "start").length;
+      const ends = list.filter((t) => t.role === "end").length;
+      const chips = [
+        { label: `start: ${starts}`, ok: starts <= 1 },
+        { label: `end: ${ends}`, ok: ends <= 1 },
+        { label: `всего: ${list.length}`, ok: list.length >= 2 },
+      ];
+      roleCheckEl.innerHTML = chips
+        .map(
+          (c) =>
+            `<span class="role-chip ${c.ok ? "ok" : "bad"}">${c.label}${c.ok ? " ✓" : ""}</span>`,
+        )
+        .join("");
+    }
+
+    function classifyEdge(edge) {
+      const from = String(edge.from || "");
+      const to = String(edge.to || "");
+      const isTerminal = (id) => id.startsWith("terminal:");
+      const isAttachPoint = (id) =>
+        id.startsWith("steiner:hub:") ||
+        id.startsWith("steiner:attach:") ||
+        id.startsWith("steiner:fixed_exit:");
+      if (isTerminal(from) && isAttachPoint(to)) return "connector";
+      if (isTerminal(to) && isAttachPoint(from)) return "connector";
+      return "backbone";
+    }
+
+    function classifySteinerId(id) {
+      const s = String(id);
+      if (s.startsWith("steiner:hub:")) return "hub";
+      if (s.startsWith("steiner:attach:")) return "attach";
+      if (s.startsWith("steiner:fixed_exit:")) return "fixed_exit";
+      if (s.startsWith("steiner:candidate:")) return "candidate";
+      if (s.startsWith("steiner:waypoint:")) return "waypoint";
+      return "steiner";
+    }
+
+    function steinerLabel(kind) {
+      return (
+        {
+          hub: "Hub (ответвление)",
+          attach: "Attach (примыкание)",
+          fixed_exit: "Fixed exit (outgoing)",
+          candidate: "GeoSteiner candidate",
+          waypoint: "Waypoint",
+          steiner: "Steiner",
+        }[kind] || kind
+      );
+    }
+
+    function readOutgoingFromInputs(bearingEl, lengthEl) {
+      const bearingRaw = bearingEl.value.trim();
+      const lengthRaw = lengthEl.value.trim();
+      if (!bearingRaw && !lengthRaw) return null;
+      const bearing_deg = parseFloat(bearingRaw);
+      const length_m = parseFloat(lengthRaw);
+      if (!Number.isFinite(bearing_deg) || !Number.isFinite(length_m) || length_m <= 0) {
+        return null;
+      }
+      return { bearing_deg, length_m };
+    }
+
+    function outgoingFromTerminalJson(t) {
+      const outgoing = t?.outgoing;
+      if (!outgoing || outgoing.bearing_deg == null || outgoing.length_m == null) return null;
+      const bearing_deg = Number(outgoing.bearing_deg);
+      const length_m = Number(outgoing.length_m);
+      if (!Number.isFinite(bearing_deg) || !Number.isFinite(length_m) || length_m <= 0) {
+        return null;
+      }
+      return { bearing_deg, length_m };
+    }
+
+    function terminalJsonOutgoing(meta) {
+      if (!meta?.outgoing) return undefined;
+      return {
+        bearing_deg: meta.outgoing.bearing_deg,
+        length_m: meta.outgoing.length_m,
+      };
+    }
+
+    function buildNodeCoordsFromResponse(response) {
+      const coords = {};
+      for (const point of response.network_tree?.steiner_points || []) {
+        coords[String(point.id)] = [Number(point.lat), Number(point.lon)];
+      }
+      for (const edge of response.network_tree?.edges || []) {
+        const geom = edge.geometry;
+        if (!geom?.coordinates?.length) continue;
+        const start = geom.coordinates[0];
+        const end = geom.coordinates[geom.coordinates.length - 1];
+        coords[String(edge.from)] = [start[1], start[0]];
+        coords[String(edge.to)] = [end[1], end[0]];
+      }
+      return coords;
+    }
+
+    function hubOverlapsTerminal(hubId, hubLat, hubLon, terminalCoords) {
+      const tid = hubId.replace("steiner:hub:", "");
+      const termKey = `terminal:${tid}`;
+      const term = terminalCoords[termKey];
+      if (!term) return false;
+      return Math.abs(term[0] - hubLat) < 1e-7 && Math.abs(term[1] - hubLon) < 1e-7;
+    }
+
+    function getPostProcessRadiusOptions(req) {
+      const opts = req?.options || {};
+      return {
+        connectorKm: Math.max(0, parseFloat(opts.connector_max_km ?? 0.2) || 0),
+        steinerKm: Math.max(0, parseFloat(opts.steiner_radius_km ?? 0) || 0),
+        enforceAttachment: opts.enforce_attachment_radius !== false,
+      };
+    }
+
+    function collectTerminalPointsForRadii(req) {
+      const points = [];
+      if (editTerminals.getLayers().length) {
+        editTerminals.eachLayer((marker) => {
+          const meta = marker.terminalMeta || {};
+          points.push({
+            id: meta.id || "?",
+            role: meta.role || "intermediate",
+            latlng: marker.getLatLng(),
+          });
+        });
+        return points;
+      }
+      for (const t of req?.terminals || []) {
+        if (t.lon == null || t.lat == null) continue;
+        points.push({
+          id: t.id,
+          role: t.role || "intermediate",
+          latlng: L.latLng(t.lat, t.lon),
+        });
+      }
+      return points;
+    }
+
+    function radiiLayerEnabled() {
+      return el("showRadiiOnMap").checked && el("layerRadii").checked;
+    }
+
+    function syncRadiiLayerVisibility() {
+      if (radiiLayerEnabled()) {
+        if (!map.hasLayer(radiusLayer)) map.addLayer(radiusLayer);
+      } else {
+        map.removeLayer(radiusLayer);
+      }
+    }
+
+    function updateRadiusOverlay(req) {
+      radiusLayer.clearLayers();
+      syncRadiiLayerVisibility();
+      if (!radiiLayerEnabled()) return;
+
+      const { connectorKm, steinerKm, enforceAttachment } = getPostProcessRadiusOptions(req);
+      const showConnector = enforceAttachment && connectorKm > 0;
+      const showSteiner = steinerKm > 0;
+      if (!showConnector && !showSteiner) return;
+
+      for (const t of collectTerminalPointsForRadii(req)) {
+        if (showConnector) {
+          const attachCircle = L.circle(t.latlng, {
+            radius: connectorKm * 1000,
+            color: "#06b6d4",
+            weight: 1.5,
+            dashArray: "7 5",
+            fillColor: "#06b6d4",
+            fillOpacity: 0.07,
+          });
+          attachCircle.bindPopup(
+            `<strong>${t.id}</strong> · ${t.role}<br>` +
+              `connector_max_km: <strong>${connectorKm}</strong> km<br>` +
+              `enforce_attachment_radius: true`,
+          );
+          radiusLayer.addLayer(attachCircle);
+        }
+        if (showSteiner) {
+          const repelCircle = L.circle(t.latlng, {
+            radius: steinerKm * 1000,
+            color: "#f97316",
+            weight: 1.5,
+            dashArray: "4 7",
+            fillColor: "#f97316",
+            fillOpacity: 0.06,
+          });
+          repelCircle.bindPopup(
+            `<strong>${t.id}</strong> · ${t.role}<br>` +
+              `steiner_radius_km (repel): <strong>${steinerKm}</strong> km`,
+          );
+          radiusLayer.addLayer(repelCircle);
+        }
+      }
+    }
+
+    function bindLayerToggles() {
+      el("layerEditor").addEventListener("change", (e) => {
+        if (e.target.checked) map.addLayer(editTerminals);
+        else map.removeLayer(editTerminals);
+      });
+      el("layerRadii").addEventListener("change", () => {
+        try {
+          updateRadiusOverlay(parseRequest());
+        } catch (e) {
+          updateRadiusOverlay({ terminals: [], options: {} });
+        }
+      });
+      el("showRadiiOnMap").addEventListener("change", () => {
+        try {
+          updateRadiusOverlay(parseRequest());
+        } catch (e) {
+          updateRadiusOverlay({ terminals: [], options: {} });
+        }
+      });
+      el("layerZones").addEventListener("change", (e) => {
+        if (e.target.checked) {
+          map.addLayer(editZones);
+          updateZoneBufferOverlay();
+        } else {
+          map.removeLayer(editZones);
+          map.removeLayer(zoneBufferLayer);
+        }
+      });
+      el("layerResult").addEventListener("change", (e) => {
+        if (e.target.checked) map.addLayer(resultLayer);
+        else map.removeLayer(resultLayer);
+      });
+      el("layerDem").addEventListener("change", (e) => {
+        if (e.target.checked) map.addLayer(demBoundsLayer);
+        else map.removeLayer(demBoundsLayer);
+      });
+    }
+    bindLayerToggles();
+
+    let activeDrawHandler = null;
+    const coordsText = el("coordsText");
+    const zoomText = el("zoomText");
+
+    function collectEditorLatLngs() {
+      const points = [];
+      editTerminals.eachLayer((l) => points.push(l.getLatLng()));
+      editZones.eachLayer((l) => {
+        const latlngs = l.getLatLngs();
+        const ring = Array.isArray(latlngs[0]) ? latlngs[0] : latlngs;
+        ring.forEach((ll) => points.push(ll));
+      });
+      return points;
+    }
+
+    function collectAllMapLatLngs() {
+      const points = collectEditorLatLngs();
+      resultLayer.eachLayer((layer) => {
+        if (layer.getLatLng) points.push(layer.getLatLng());
+        if (layer.getLatLngs) {
+          const latlngs = layer.getLatLngs();
+          if (Array.isArray(latlngs[0])) latlngs[0].forEach((ll) => points.push(ll));
+          else latlngs.forEach((ll) => points.push(ll));
+        }
+      });
+      const b = FIXTURE_DEM_BOUNDS;
+      points.push(L.latLng(b.south, b.west), L.latLng(b.north, b.east));
+      return points;
+    }
+
+    function fitMapToLatLngs(points, padding) {
+      if (!points.length) return false;
+      map.fitBounds(L.latLngBounds(points), { padding: padding || [48, 48], maxZoom: 17 });
+      return true;
+    }
+
+    function fitEditorView(showStatus) {
+      const ok = fitMapToLatLngs(collectEditorLatLngs());
+      if (showStatus) {
+        setStatus(ok ? "Центр: терминалы и зоны" : "На карте нет объектов редактора", ok ? "ok" : "warn");
+      }
+      return ok;
+    }
+
+    function fitDemView(showStatus) {
+      const b = FIXTURE_DEM_BOUNDS;
+      map.fitBounds(
+        [
+          [b.south, b.west],
+          [b.north, b.east],
+        ],
+        { padding: [32, 32], maxZoom: 16 },
+      );
+      if (showStatus) setStatus("Центр: граница DEM", "ok");
+    }
+
+    function fitResultView(showStatus) {
+      if (lastResultBounds) {
+        map.fitBounds(lastResultBounds, { padding: [48, 48], maxZoom: 17 });
+        if (showStatus) setStatus("Центр: сеть результата", "ok");
+        return true;
+      }
+      if (showStatus) setStatus("Нет результата расчёта", "warn");
+      return false;
+    }
+
+    function fitAllView(showStatus) {
+      const ok = fitMapToLatLngs(collectAllMapLatLngs());
+      if (showStatus) setStatus(ok ? "Центр: все слои" : "Нечего показывать", ok ? "ok" : "warn");
+      return ok;
+    }
+
+    function goHomeView(showStatus) {
+      map.setView(HOME_VIEW.center, HOME_VIEW.zoom);
+      if (showStatus) setStatus("Обзор сцены", "ok");
+    }
+
+    function updateZoomLabel() {
+      zoomText.textContent = "z" + map.getZoom();
+    }
+
+    function cancelActiveTools() {
+      setTerminalPlaceMode(false);
+      if (activeDrawHandler) {
+        activeDrawHandler.disable();
+        activeDrawHandler = null;
+      }
+    }
+
+    function startDrawZone(mode, category) {
+      cancelActiveTools();
+      pendingZoneDraw =
+        mode === "penalty" && category
+          ? { mode: "penalty", category }
+          : { mode: "ban" };
+      activeDrawHandler = new L.Draw.Polygon(map, drawControl.options.draw.polygon);
+      activeDrawHandler.enable();
+      const cat = category && PENALTY_CATEGORIES[category];
+      const label = cat ? cat.label + " (penalty ×" + cat.multiplier + ")" : "ban";
+      setStatus(
+        "Рисуйте полигон " +
+          label +
+          " (двойной клик — завершить, Esc — отмена). Работает и в euclid без DEM",
+        "ok",
+      );
+    }
+
+    function startDrawBanZone() {
+      startDrawZone("ban");
+    }
+
+    function setWorkflowStep(stepIndex) {
+      document.querySelectorAll("#workflowSteps .step").forEach((node, i) => {
+        node.classList.toggle("active", i === stepIndex);
+      });
+    }
+
+    function scrollToPanel(panelId) {
+      const node = document.getElementById(panelId);
+      if (node) node.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function initMapNavigation() {
+      map.on("mousemove", (e) => {
+        coordsText.textContent =
+          e.latlng.lat.toFixed(5) + "°N " + e.latlng.lng.toFixed(5) + "°E";
+      });
+      map.on("mouseout", () => {
+        coordsText.textContent = "—";
+      });
+      map.on("zoomend", updateZoomLabel);
+      updateZoomLabel();
+
+      document.getElementById("workflowSteps")?.addEventListener("click", (ev) => {
+        const step = ev.target.closest(".step");
+        if (!step) return;
+        if (step.dataset.tab) {
+          switchExchangeTab(step.dataset.tab);
+          const idx = [...step.parentElement.children].indexOf(step);
+          if (idx >= 0) setWorkflowStep(idx);
+          return;
+        }
+        if (step.dataset.target) {
+          scrollToPanel(step.dataset.target);
+          const idx = [...step.parentElement.children].indexOf(step);
+          if (idx >= 0) setWorkflowStep(idx);
+        }
+      });
+
+      document.querySelectorAll("[data-tab-link]").forEach((link) => {
+        link.addEventListener("click", (ev) => {
+          const tab = link.dataset.tabLink;
+          if (!tab) return;
+          ev.preventDefault();
+          switchExchangeTab(tab);
+          setWorkflowStep(tab === "request" ? 2 : 3);
+        });
+      });
+
+      document.querySelectorAll(".exchange-tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          switchExchangeTab(btn.dataset.tab);
+          setWorkflowStep(btn.dataset.tab === "request" ? 2 : 3);
+        });
+      });
+
+      el("legendToggle").addEventListener("click", () => {
+        el("mapLegend").classList.toggle("collapsed");
+        el("legendToggle").textContent =
+          el("mapLegend").classList.contains("collapsed") ? "Легенда ▸" : "Легенда ▾";
+      });
+
+      el("mapBtnTerminal").addEventListener("click", () => {
+        cancelActiveTools();
+        setTerminalPlaceMode(true);
+      });
+      el("mapBtnBan").addEventListener("click", startDrawBanZone);
+      el("mapBtnCancel").addEventListener("click", () => {
+        cancelActiveTools();
+        setStatus("Режим рисования отменён", "ok");
+      });
+      el("mapBtnFullscreen").addEventListener("click", () => {
+        const wrap = el("mapWrap");
+        if (!document.fullscreenElement) wrap.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      });
+
+      el("mapBtnFitEditor").addEventListener("click", () => fitEditorView(true));
+      el("mapBtnFitDem").addEventListener("click", () => fitDemView(true));
+      el("mapBtnFitResult").addEventListener("click", () => fitResultView(true));
+      el("mapBtnFitAll").addEventListener("click", () => fitAllView(true));
+      el("mapBtnHome").addEventListener("click", () => goHomeView(true));
+
+      el("btnDrawBan").addEventListener("click", startDrawBanZone);
+      el("btnDrawDryLand").addEventListener("click", () => startDrawZone("penalty", "dry_land"));
+      el("btnDrawSwamp").addEventListener("click", () => startDrawZone("penalty", "swamp"));
+      el("btnDrawFloodplain").addEventListener("click", () =>
+        startDrawZone("penalty", "floodplain"),
+      );
+      el("btnClearZones").addEventListener("click", () => {
+        editZones.clearLayers();
+        storedDrawnZones = [];
+        updateZoneBufferOverlay();
+        syncJsonFromMap(false);
+        setStatus("Зоны очищены", "ok");
+      });
+
+      document.addEventListener("keydown", (ev) => {
+        if (ev.target.matches("textarea, input, select")) return;
+        const key = ev.key.toLowerCase();
+        if (key === "escape") {
+          cancelActiveTools();
+          return;
+        }
+        if (key === "t") {
+          ev.preventDefault();
+          cancelActiveTools();
+          setTerminalPlaceMode(true);
+          return;
+        }
+        if (key === "b") {
+          ev.preventDefault();
+          startDrawBanZone();
+          return;
+        }
+        if (key === "f") {
+          ev.preventDefault();
+          el("mapBtnFullscreen").click();
+          return;
+        }
+        if (key === "1") {
+          ev.preventDefault();
+          fitEditorView(true);
+        } else if (key === "2") {
+          ev.preventDefault();
+          fitDemView(true);
+        } else if (key === "3") {
+          ev.preventDefault();
+          fitResultView(true);
+        } else if (key === "4") {
+          ev.preventDefault();
+          fitAllView(true);
+        }
+      });
+    }
+
+    const DEFAULT_TERRAIN = {
+      elevation_raster: {
+        path: "elevation_small.tif",
+        crs: "EPSG:32637",
+        nodata: -9999,
+      },
+      clip_buffer_km: 0.15,
+    };
+
+    function collectDrawnZones() {
+      const drawnZones = [];
+      editZones.eachLayer((layer) => {
+        drawnZones.push(zoneFromLayer(layer));
+      });
+      if (drawnZones.length === 0 && storedDrawnZones.length > 0) {
+        return storedDrawnZones.map((z) => ({ ...z }));
+      }
+      return drawnZones;
+    }
+
+    function mergeTerrainZones(existingZones, drawnZones) {
+      const byId = new Map();
+      for (const zone of drawnZones) {
+        const id = zone.id || `ban-drawn-${byId.size + 1}`;
+        const merged = { ...zone, id };
+        if (
+          merged.mode === "penalty" &&
+          merged.multiplier == null &&
+          merged.category == null
+        ) {
+          merged.multiplier = 5.0;
+        }
+        byId.set(id, merged);
+      }
+      for (const zone of existingZones || []) {
+        if (zone?.source && !zone.geometry && zone.id && !byId.has(zone.id)) {
+          byId.set(zone.id, zone);
+        }
+      }
+      if (drawnZones.length === 0) {
+        for (const zone of existingZones || []) {
+          if (zone?.geometry && zone.id && !byId.has(zone.id)) {
+            byId.set(zone.id, zone);
+          }
+        }
+      }
+      return [...byId.values()];
+    }
+
+    function syncPostProcessFromRequest(req) {
+      const opts = req.options || {};
+      el("optNormalizeLeaves").checked = Boolean(opts.normalize_terminal_leaves);
+      el("optEnforceAttachment").checked = Boolean(opts.enforce_attachment_radius);
+      el("optConnectorMax").value = String(opts.connector_max_km ?? 0.2);
+      el("optEdgeSpacing").value = String(opts.edge_vertex_spacing_km ?? 0);
+      el("optSteinerRadius").value = String(opts.steiner_radius_km ?? 0);
+    }
+
+    function applyPostProcessToRequest(req) {
+      if (!req.options) req.options = {};
+      req.options.normalize_terminal_leaves = el("optNormalizeLeaves").checked;
+      req.options.enforce_attachment_radius = el("optEnforceAttachment").checked;
+      req.options.connector_max_km = parseFloat(el("optConnectorMax").value);
+      if (!Number.isFinite(req.options.connector_max_km) || req.options.connector_max_km < 0) {
+        req.options.connector_max_km = 0.2;
+      }
+      req.options.edge_vertex_spacing_km =
+        parseFloat(el("optEdgeSpacing").value) || 0;
+      req.options.steiner_radius_km =
+        parseFloat(el("optSteinerRadius").value) || 0;
+    }
+
+    function setPostProcessPreset(clean) {
+      if (clean) {
+        el("optNormalizeLeaves").checked = false;
+        el("optEnforceAttachment").checked = false;
+        el("optConnectorMax").value = "0.2";
+        el("optEdgeSpacing").value = "0";
+        el("optSteinerRadius").value = "0";
+      } else {
+        el("optNormalizeLeaves").checked = true;
+        el("optEnforceAttachment").checked = true;
+        el("optConnectorMax").value = "0.2";
+        el("optEdgeSpacing").value = "0";
+        el("optSteinerRadius").value = "0";
+      }
+    }
+
+    function syncPostProcessOptionsToJson(showStatus) {
+      try {
+        const req = parseRequest();
+        applyPostProcessToRequest(req);
+        writeRequestJson(req);
+        updateRequestSummary(req);
+        updateRadiusOverlay(req);
+        if (showStatus) setStatus("options post-process обновлены в JSON", "ok");
+      } catch (e) {
+        setStatus("JSON: " + e.message, "err");
+      }
+    }
+
+    function syncToggleFromRequest(req) {
+      el("useElevationRaster").checked = req.mode === "full";
+      syncPostProcessFromRequest(req);
+      syncZoneBufferFromRequest(req);
+      syncAllowTerminalInBufferFromRequest(req);
+      const opts = req.options || {};
+      el("euclidObstacleRouting").checked =
+        opts.euclid_routing == null ? true : opts.euclid_routing !== "direct";
+      el("euclidSteinerCandidates").checked =
+        opts.euclid_steiner_candidates == null
+          ? true
+          : Boolean(opts.euclid_steiner_candidates);
+    }
+
+    function ensureRequestOptions(req) {
+      if (!req.options) req.options = {};
+      if (req.options.max_points == null) req.options.max_points = 50;
+      applyPostProcessToRequest(req);
+      if (req.mode === "euclid") {
+        req.options.euclid_routing = el("euclidObstacleRouting").checked
+          ? "obstacle"
+          : "direct";
+        req.options.euclid_steiner_candidates = el("euclidSteinerCandidates").checked;
+      }
+      applyAllowTerminalInBufferToRequest(req);
+      return req;
+    }
+
+    function writeRequestJson(req) {
+      ensureRequestOptions(req);
+      applyZoneBufferToAllZones(req);
+      requestJson.value = JSON.stringify(req, null, 2);
+      updateRequestSummary(req);
+    }
+
+    function applyRasterMode(req, useRaster, drawnZones) {
+      const existingZones = req.terrain?.zones || [];
+      const zones = mergeTerrainZones(existingZones, drawnZones);
+      if (useRaster) {
+        req.mode = "full";
+        if (!req.terrain) {
+          req.terrain = JSON.parse(JSON.stringify(DEFAULT_TERRAIN));
+        }
+        if (!req.terrain.elevation_raster?.path) {
+          req.terrain.elevation_raster = { ...DEFAULT_TERRAIN.elevation_raster };
+        }
+        if (req.terrain.clip_buffer_km == null) {
+          req.terrain.clip_buffer_km = DEFAULT_TERRAIN.clip_buffer_km;
+        }
+        req.terrain.zones = zones;
+      } else {
+        req.mode = "euclid";
+        if (zones.length > 0) {
+          req.terrain = { zones };
+        } else {
+          delete req.terrain;
+        }
+      }
+    }
+
+    function buildPlanRequestFromEditor() {
+      let req;
+      try {
+        req = parseRequest();
+      } catch (e) {
+        setStatus("JSON не читается: " + e.message, "err");
+        return null;
+      }
+
+      const terminals = [];
+      editTerminals.eachLayer((layer) => {
+        const ll = layer.getLatLng();
+        const meta = layer.terminalMeta || { id: "t-unknown", role: "intermediate" };
+        const row = {
+          id: meta.id,
+          type: "oil_pad",
+          role: meta.role,
+          lon: ll.lng,
+          lat: ll.lat,
+        };
+        const outgoing = terminalJsonOutgoing(meta);
+        if (outgoing) row.outgoing = outgoing;
+        terminals.push(row);
+      });
+      req.terminals = terminals.length > 0 ? terminals : req.terminals || [];
+      ensureRequestOptions(req);
+      const drawnZones = collectDrawnZones();
+      applyRasterMode(req, el("useElevationRaster").checked, drawnZones);
+      rebuildStoredDrawnZones();
+      writeRequestJson(req);
+      updateDemBoundsOverlay(req);
+      updateRoleCheck(terminals);
+      updateRadiusOverlay(req);
+      return req;
+    }
+
+    function setStatus(text, kind) {
+      statusEl.textContent = text;
+      statusEl.className = "status visible " + (kind || "");
+    }
+
+    function clearStatus() {
+      statusEl.className = "status";
+    }
+
+    function parseRequest() {
+      return JSON.parse(requestJson.value);
+    }
+
+    function ringToGeoJSON(latlngs) {
+      const coords = latlngs.map((ll) => [ll.lng, ll.lat]);
+      if (coords.length) {
+        const first = coords[0];
+        const last = coords[coords.length - 1];
+        if (first[0] !== last[0] || first[1] !== last[1]) {
+          coords.push([first[0], first[1]]);
+        }
+      }
+      return { type: "Polygon", coordinates: [coords] };
+    }
+
+    function geoJSONToLatLngs(geometry) {
+      if (!geometry) return null;
+      let ring;
+      if (geometry.type === "Polygon") {
+        ring = geometry.coordinates[0];
+      } else if (geometry.type === "MultiPolygon") {
+        ring = geometry.coordinates[0][0];
+      } else {
+        return null;
+      }
+      return ring.map(([lon, lat]) => L.latLng(lat, lon));
+    }
+
+    function nextTerminalId(existingIds) {
+      let n = 1;
+      while (existingIds.has("t-" + n)) n += 1;
+      return "t-" + n;
+    }
+
+    function createTerminalMarker(latlng, id, role, outgoing = null) {
+      const color = ROLE_COLORS[role] || ROLE_COLORS.start;
+      const marker = L.marker(latlng, {
+        draggable: true,
+        icon: L.divIcon({
+          className: "terminal-marker-icon",
+          html:
+            `<div class="terminal-marker-wrap">` +
+            `<div class="terminal-marker-dot" style="background:${color}"></div>` +
+            `<span class="terminal-marker-label">${id}</span></div>`,
+          iconSize: [18, 30],
+          iconAnchor: [9, 9],
+        }),
+      });
+      marker.terminalMeta = { id, role, outgoing: outgoing || null };
+
+      const popupContent = document.createElement("div");
+      const bearingValue =
+        outgoing && outgoing.bearing_deg != null ? String(outgoing.bearing_deg) : "";
+      const lengthValue =
+        outgoing && outgoing.length_m != null ? String(outgoing.length_m) : "";
+      popupContent.innerHTML =
+        `<strong>${id}</strong><br>` +
+        `<label>role: </label>` +
+        `<select id="popup-role-${id}">` +
+        Object.keys(ROLE_COLORS)
+          .map((r) => `<option value="${r}"${r === role ? " selected" : ""}>${r}</option>`)
+          .join("") +
+        `<br><label>bearing°: </label>` +
+        `<input type="number" id="popup-bearing-${id}" step="any" style="width:4.5rem" placeholder="—" value="${bearingValue}" />` +
+        `<label> length m: </label>` +
+        `<input type="number" id="popup-length-${id}" step="any" min="0" style="width:4rem" placeholder="—" value="${lengthValue}" />` +
+        `<br><button type="button" style="margin-top:6px">Удалить</button>`;
+
+      const select = popupContent.querySelector("select");
+      const bearingInput = popupContent.querySelector(`#popup-bearing-${id}`);
+      const lengthInput = popupContent.querySelector(`#popup-length-${id}`);
+
+      function syncOutgoingFromPopup() {
+        marker.terminalMeta.outgoing = readOutgoingFromInputs(bearingInput, lengthInput);
+        syncJsonFromMap(false);
+      }
+
+      select.addEventListener("change", () => {
+        marker.terminalMeta.role = select.value;
+        const c = ROLE_COLORS[select.value];
+        const dot = marker.getElement()?.querySelector(".terminal-marker-dot");
+        if (dot) dot.style.background = c;
+        syncJsonFromMap(false);
+      });
+      bearingInput.addEventListener("change", syncOutgoingFromPopup);
+      lengthInput.addEventListener("change", syncOutgoingFromPopup);
+      popupContent.querySelector("button").addEventListener("click", () => {
+        editTerminals.removeLayer(marker);
+        syncJsonFromMap(false);
+      });
+
+      marker.bindPopup(popupContent);
+      marker.on("dragend", () => syncJsonFromMap(false));
+      return marker;
+    }
+
+    function syncJsonFromMap(showOk) {
+      const req = buildPlanRequestFromEditor();
+      if (!req) return false;
+
+      const drawnZones = collectDrawnZones();
+      const zoneCount = (req.terrain?.zones || []).length;
+      if (showOk !== false && drawnZones.length === 0 && req.terminals.length > 0) {
+        setStatus(
+          "Карта → JSON: " +
+            req.terminals.length +
+            " терминал(ов), mode: " +
+            req.mode +
+            (el("useElevationRaster").checked ? " (DEM)" : ""),
+          "ok",
+        );
+      } else if (showOk !== false && (drawnZones.length > 0 || zoneCount > 0)) {
+        setStatus(
+          "Карта → JSON: " +
+            req.terminals.length +
+            " терминал(ов), " +
+            zoneCount +
+            " зон(ы), mode: " +
+            req.mode,
+          "ok",
+        );
+      }
+      return true;
+    }
+
+    function syncMapFromJson() {
+      let req;
+      try {
+        req = parseRequest();
+      } catch (e) {
+        setStatus("JSON → карта: " + e.message, "err");
+        return;
+      }
+
+      editTerminals.clearLayers();
+      editZones.clearLayers();
+      terminalCounter = 0;
+      zoneCounter = 0;
+
+      const existingIds = new Set();
+      for (const t of req.terminals || []) {
+        if (t.lon == null || t.lat == null) continue;
+        existingIds.add(t.id);
+        const marker = createTerminalMarker(
+          L.latLng(t.lat, t.lon),
+          t.id,
+          t.role || "intermediate",
+          outgoingFromTerminalJson(t),
+        );
+        editTerminals.addLayer(marker);
+      }
+      terminalCounter = existingIds.size;
+
+      for (const zone of req.terrain?.zones || []) {
+        if (!zone.geometry) continue;
+        const latlngs = geoJSONToLatLngs(zone.geometry);
+        if (!latlngs || latlngs.length < 3) continue;
+        zoneCounter += 1;
+        const poly = createZoneLayer(latlngs, {
+          id: zone.id || "ban-" + zoneCounter,
+          mode: zone.mode || "ban",
+          category: zone.category,
+          multiplier: zone.multiplier,
+          buffer_m: zone.buffer_m,
+        });
+        editZones.addLayer(poly);
+      }
+      updateZoneBufferOverlay();
+
+      const bounds = collectEditorLatLngs();
+      if (bounds.length) {
+        fitMapToLatLngs(bounds);
+      }
+
+      updateDemBoundsOverlay(req);
+      syncToggleFromRequest(req);
+      updateRoleCheck(req.terminals || []);
+      applyRasterMode(req, el("useElevationRaster").checked, collectDrawnZones());
+      rebuildStoredDrawnZones();
+      writeRequestJson(req);
+      updateRadiusOverlay(req);
+      clearStatus();
+    }
+
+    function setTerminalPlaceMode(on) {
+      if (on) {
+        if (activeDrawHandler) {
+          activeDrawHandler.disable();
+          activeDrawHandler = null;
+        }
+      }
+      terminalPlaceMode = on;
+      btnPlaceTerminal.classList.toggle("active", on);
+      map.getContainer().classList.toggle("map-crosshair", on);
+      btnPlaceTerminal.textContent = on ? "Клик на карте…" : "+ терминал";
+    }
+
+    function invalidateMapSize() {
+      map.invalidateSize({ animate: false });
+    }
+
+    async function loadPreset(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Не удалось загрузить пресет: " + res.status);
+      const data = await res.json();
+      syncToggleFromRequest(data);
+      writeRequestJson(data);
+      syncMapFromJson();
+    }
+
+    map.on(L.Draw.Event.CREATED, (e) => {
+      if (e.layerType !== "polygon") return;
+      zoneCounter += 1;
+      const drawMeta = pendingZoneDraw || { mode: "ban" };
+      const idPrefix =
+        drawMeta.mode === "penalty" && drawMeta.category ? drawMeta.category : "ban";
+      e.layer.zoneMeta = {
+        id: idPrefix + "-" + zoneCounter,
+        mode: drawMeta.mode,
+        category: drawMeta.category,
+        buffer_m: getZoneBufferM() || undefined,
+      };
+      e.layer.setStyle(zoneStyleFromMeta(e.layer.zoneMeta));
+      bindZonePopup(e.layer);
+      editZones.addLayer(e.layer);
+      activeDrawHandler = null;
+      pendingZoneDraw = { mode: "ban" };
+      rebuildStoredDrawnZones();
+      updateZoneBufferOverlay();
+      buildPlanRequestFromEditor();
+      const cat =
+        drawMeta.category && PENALTY_CATEGORIES[drawMeta.category]
+          ? PENALTY_CATEGORIES[drawMeta.category].label
+          : "ban";
+      setStatus(
+        "Зона " +
+          cat +
+          " добавлена · " +
+          storedDrawnZones.length +
+          " в запросе · mode: " +
+          (el("useElevationRaster").checked ? "full" : "euclid"),
+        "ok",
+      );
+    });
+
+    map.on(L.Draw.Event.DRAWSTOP, () => {
+      activeDrawHandler = null;
+    });
+
+    map.on(L.Draw.Event.EDITED, () => {
+      editZones.eachLayer((layer) => bindZonePopup(layer));
+      rebuildStoredDrawnZones();
+      updateZoneBufferOverlay();
+      buildPlanRequestFromEditor();
+    });
+    map.on(L.Draw.Event.DELETED, () => {
+      rebuildStoredDrawnZones();
+      updateZoneBufferOverlay();
+      buildPlanRequestFromEditor();
+    });
+
+    map.on("click", (e) => {
+      if (!terminalPlaceMode) return;
+      const role = el("terminalRole").value;
+      const existingIds = new Set();
+      editTerminals.eachLayer((l) => existingIds.add(l.terminalMeta.id));
+      const id = nextTerminalId(existingIds);
+      const outgoing = readOutgoingFromInputs(
+        el("terminalOutgoingBearing"),
+        el("terminalOutgoingLength"),
+      );
+      const marker = createTerminalMarker(e.latlng, id, role, outgoing);
+      editTerminals.addLayer(marker);
+      setTerminalPlaceMode(false);
+      syncJsonFromMap(false);
+      setStatus("Терминал " + id + " (" + role + ")", "ok");
+    });
+
+    btnPlaceTerminal.addEventListener("click", () => {
+      setTerminalPlaceMode(!terminalPlaceMode);
+    });
+
+    el("btnClearTerminals").addEventListener("click", () => {
+      editTerminals.clearLayers();
+      syncJsonFromMap(false);
+      setStatus("Терминалы очищены", "ok");
+    });
+
+    el("btnMapToJson").addEventListener("click", () => syncJsonFromMap(true));
+    el("btnJsonToMap").addEventListener("click", () => syncMapFromJson());
+
+    el("useElevationRaster").addEventListener("change", () => {
+      const drawnZones = collectDrawnZones();
+      try {
+        const req = parseRequest();
+        applyRasterMode(req, el("useElevationRaster").checked, drawnZones);
+        writeRequestJson(req);
+        updateDemBoundsOverlay(req);
+        setStatus(
+          el("useElevationRaster").checked
+            ? "DEM вкл → mode: full (нужен elevation_small.tif в base-dir)"
+            : drawnZones.length > 0
+              ? "DEM выкл → mode: euclid, зоны в terrain.zones (геометрия)"
+              : "DEM выкл → mode: euclid",
+          "ok",
+        );
+      } catch (e) {
+        setStatus("JSON: " + e.message, "err");
+      }
+    });
+
+    ["optNormalizeLeaves", "optEnforceAttachment", "showRadiiOnMap"].forEach((id) => {
+      el(id).addEventListener("change", () => {
+        syncPostProcessOptionsToJson(true);
+        try {
+          updateRadiusOverlay(parseRequest());
+        } catch (e) {
+          /* ignore until JSON valid */
+        }
+      });
+    });
+    ["optEdgeSpacing", "optSteinerRadius", "optConnectorMax"].forEach((id) => {
+      el(id).addEventListener("change", () => {
+        syncPostProcessOptionsToJson(true);
+        try {
+          updateRadiusOverlay(parseRequest());
+        } catch (e) {
+          /* ignore */
+        }
+      });
+      el(id).addEventListener("input", () => {
+        syncPostProcessOptionsToJson(false);
+        try {
+          updateRadiusOverlay(parseRequest());
+        } catch (e) {
+          /* ignore */
+        }
+      });
+    });
+    function syncZoneBufferOptionsToJson(showStatus) {
+      try {
+        const req = parseRequest();
+        applyZoneBufferToAllZones(req);
+        writeRequestJson(req);
+        syncZoneBufferToZoneLayers();
+        rebuildStoredDrawnZones();
+        if (showStatus) {
+          const bufferM = getZoneBufferM();
+          setStatus(
+            bufferM > 0
+              ? "terrain.zones[].buffer_m = " + bufferM + " м"
+              : "buffer_m сброшен (0)",
+            "ok",
+          );
+        }
+      } catch (e) {
+        setStatus("JSON: " + e.message, "err");
+      }
+    }
+    ["optZoneBufferM"].forEach((id) => {
+      el(id).addEventListener("change", () => syncZoneBufferOptionsToJson(true));
+      el(id).addEventListener("input", () => syncZoneBufferOptionsToJson(false));
+    });
+    el("optAllowTerminalInBuffer").addEventListener("change", () => {
+      try {
+        const req = parseRequest();
+        applyAllowTerminalInBufferToRequest(req);
+        writeRequestJson(req);
+        setStatus(
+          el("optAllowTerminalInBuffer").checked
+            ? "options.allow_terminal_in_zone_buffer: true"
+            : "allow_terminal_in_zone_buffer выкл.",
+          "ok",
+        );
+      } catch (e) {
+        setStatus("JSON: " + e.message, "err");
+      }
+    });
+    el("btnPostProcessClean").addEventListener("click", () => {
+      setPostProcessPreset(true);
+      syncPostProcessOptionsToJson(true);
+      setStatus("Чистое Steiner: normalize/enforce — false, spacing/repel — 0", "ok");
+    });
+    el("btnPostProcessDefault").addEventListener("click", () => {
+      setPostProcessPreset(false);
+      syncPostProcessOptionsToJson(true);
+      setStatus("Defaults API: normalize/enforce — true", "ok");
+    });
+
+    el("euclidObstacleRouting").addEventListener("change", () => {
+      try {
+        const req = parseRequest();
+        writeRequestJson(req);
+        setStatus(
+          el("euclidObstacleRouting").checked
+            ? "options.euclid_routing: obstacle"
+            : "options.euclid_routing: direct",
+          "ok",
+        );
+      } catch (e) {
+        setStatus("JSON: " + e.message, "err");
+      }
+    });
+
+    el("euclidSteinerCandidates").addEventListener("change", () => {
+      try {
+        const req = parseRequest();
+        writeRequestJson(req);
+        setStatus(
+          el("euclidSteinerCandidates").checked
+            ? "options.euclid_steiner_candidates: true"
+            : "options.euclid_steiner_candidates: false",
+          "ok",
+        );
+      } catch (e) {
+        setStatus("JSON: " + e.message, "err");
+      }
+    });
+
+    el("btnLoad").addEventListener("click", async () => {
+      const url = el("preset").value;
+      if (!url) {
+        setStatus("Выберите пресет", "err");
+        return;
+      }
+      try {
+        await loadPreset(url);
+        setStatus("Пресет загружен на карту", "ok");
+      } catch (e) {
+        setStatus(e.message, "err");
+      }
+    });
+
+    el("btnFormat").addEventListener("click", () => {
+      try {
+        const parsed = parseRequest();
+        writeRequestJson(parsed);
+        switchExchangeTab("request");
+        clearStatus();
+      } catch (e) {
+        setStatus("Невалидный JSON: " + e.message, "err");
+      }
+    });
+
+    el("btnFormatRequest").addEventListener("click", () => el("btnFormat").click());
+    el("btnSyncRequestPreview").addEventListener("click", () => {
+      const req = buildPlanRequestFromEditor();
+      if (req) {
+        switchExchangeTab("request");
+        setStatus("JSON обновлён с карты", "ok");
+      }
+    });
+    el("btnApplyJsonToMap").addEventListener("click", () => el("btnJsonToMap").click());
+    el("btnCopyRequest").addEventListener("click", () => {
+      copyText(requestJson.value, "Запрос скопирован");
+    });
+    el("btnCopyResponse").addEventListener("click", () => {
+      if (!lastResponseData) {
+        setStatus("Нет ответа для копирования", "warn");
+        return;
+      }
+      copyText(JSON.stringify(lastResponseData, null, 2), "Ответ скопирован");
+    });
+    el("btnDownloadResponse").addEventListener("click", () => {
+      if (!lastResponseData) {
+        setStatus("Нет ответа для скачивания", "warn");
+        return;
+      }
+      const blob = new Blob([JSON.stringify(lastResponseData, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        (lastResponseData.project_id || "plan-response") +
+        (lastResponseOk ? "" : "-error") +
+        ".json";
+      a.click();
+      URL.revokeObjectURL(url);
+      setStatus("Файл скачан", "ok");
+    });
+
+    requestJson.addEventListener("input", () => {
+      try {
+        const req = parseRequest();
+        syncPostProcessFromRequest(req);
+        updateRequestSummary(req);
+      } catch (_) {
+        renderSummaryChips(requestSummary, [{ label: "JSON невалиден", cls: "warn" }]);
+      }
+    });
+
+    function renderApiResponse(data, { ok, status, elapsedMs, reqBytes }) {
+      lastResponseData = data;
+      lastResponseOk = ok;
+      switchExchangeTab("response");
+      setWorkflowStep(3);
+      renderResponseSummary(data, ok);
+      renderResponseJson(data);
+      setExchangeMeta({
+        status,
+        kind: ok ? "ok" : "err",
+        elapsedMs,
+        reqBytes,
+        respBytes: new TextEncoder().encode(JSON.stringify(data)).length,
+      });
+
+      metricsDl.innerHTML = "";
+      if (ok) {
+        const entries = [
+          ["project_id", data.project_id],
+          ["mode", data.mode],
+          ["solver", data.solver],
+        ];
+        if (data.metrics) {
+          for (const [k, v] of Object.entries(data.metrics)) {
+            entries.push([k, typeof v === "number" ? v.toLocaleString("ru-RU") : v]);
+          }
+        }
+        const edges = data.network_tree?.edges || [];
+        const connectors = edges.filter((e) => classifyEdge(e) === "connector").length;
+        entries.push(["edges", edges.length]);
+        entries.push(["connectors", connectors]);
+        entries.push(["steiner_points", data.network_tree?.steiner_points?.length ?? 0]);
+        for (const [k, v] of entries) {
+          if (v === undefined) continue;
+          const dt = document.createElement("dt");
+          dt.textContent = k;
+          const dd = document.createElement("dd");
+          dd.textContent = String(v);
+          metricsDl.appendChild(dt);
+          metricsDl.appendChild(dd);
+        }
+      } else {
+        for (const err of data.errors || []) {
+          const dt = document.createElement("dt");
+          dt.textContent = err.code || "error";
+          const dd = document.createElement("dd");
+          dd.textContent = err.message || "";
+          metricsDl.appendChild(dt);
+          metricsDl.appendChild(dd);
+        }
+      }
+
+      attachmentsBody.innerHTML = "";
+      const attachments = data.terminals || [];
+      if (ok && attachments.length) {
+        attachmentsTable.hidden = false;
+        for (const t of attachments) {
+          const tr = document.createElement("tr");
+          tr.innerHTML =
+            `<td><strong>${t.id}</strong></td>` +
+            `<td>${t.role || "—"}</td>` +
+            `<td><code>${t.via || "—"}</code></td>` +
+            `<td><code>${t.attached_to || "—"}</code></td>`;
+          attachmentsBody.appendChild(tr);
+        }
+      } else {
+        attachmentsTable.hidden = true;
+      }
+
+      warningsUl.innerHTML = "";
+      if (ok && data.warnings?.length) {
+        warningsUl.hidden = false;
+        for (const w of data.warnings) {
+          const li = document.createElement("li");
+          li.textContent = w;
+          warningsUl.appendChild(li);
+        }
+      } else {
+        warningsUl.hidden = true;
+      }
+    }
+
+    function clearResultOnMap() {
+      resultLayer.clearLayers();
+      lastResultBounds = null;
+    }
+
+    function renderResultOnMap(response) {
+      resultLayer.clearLayers();
+      const bounds = [];
+      const nodeCoords = buildNodeCoordsFromResponse(response);
+      const STEINER_STYLE = {
+        steiner: { radius: 6, color: "#f59e0b", fillColor: "#f59e0b" },
+        hub: { radius: 5, color: "#fff", fillColor: "#eab308" },
+        attach: { radius: 6, color: "#fff", fillColor: "#f97316" },
+        fixed_exit: { radius: 6, color: "#fff", fillColor: "#06b6d4" },
+        waypoint: { radius: 4, color: "#94a3b8", fillColor: "#64748b" },
+        candidate: { radius: 7, color: "#fff", fillColor: "#a855f7" },
+      };
+
+      for (const edge of response.network_tree?.edges || []) {
+        const geom = edge.geometry;
+        if (!geom || geom.type !== "LineString" || !geom.coordinates?.length) continue;
+        const latlngs = geom.coordinates.map(([lon, lat]) => [lat, lon]);
+        const kind = classifyEdge(edge);
+        const isConnector = kind === "connector";
+        const line = L.polyline(latlngs, {
+          color: isConnector ? "#06b6d4" : "#3b82f6",
+          weight: isConnector ? 5 : 4,
+          opacity: isConnector ? 0.95 : 0.85,
+          dashArray: isConnector ? "8 6" : null,
+        });
+        line.bindPopup(
+          `<strong>${isConnector ? "Ответвление" : "Магистраль"}</strong><br>` +
+            `<code>${edge.from}</code> → <code>${edge.to}</code><br>` +
+            `length: ${edge.length_m} m · cost: ${edge.cost}`,
+        );
+        resultLayer.addLayer(line);
+        latlngs.forEach((ll) => bounds.push(ll));
+      }
+
+      for (const pt of response.network_tree?.steiner_points || []) {
+        const kind = classifySteinerId(pt.id);
+        if (
+          kind === "hub" &&
+          hubOverlapsTerminal(pt.id, pt.lat, pt.lon, nodeCoords)
+        ) {
+          continue;
+        }
+        const style = STEINER_STYLE[kind] || STEINER_STYLE.steiner;
+        const ll = [pt.lat, pt.lon];
+        const m = L.circleMarker(ll, {
+          radius: style.radius,
+          color: style.color,
+          fillColor: style.fillColor,
+          fillOpacity: 0.95,
+          weight: 2,
+        });
+        m.bindPopup(`<strong>${pt.id}</strong><br>${steinerLabel(kind)}`);
+        resultLayer.addLayer(m);
+        bounds.push(ll);
+      }
+
+      const roleById = {};
+      for (const t of response.terminals || []) {
+        roleById[t.id] = t.role || "intermediate";
+      }
+      for (const [nodeId, latlng] of Object.entries(nodeCoords)) {
+        if (!nodeId.startsWith("terminal:")) continue;
+        const tid = nodeId.slice("terminal:".length);
+        const role = roleById[tid] || "intermediate";
+        const color = ROLE_COLORS[role] || ROLE_COLORS.intermediate;
+        const m = L.circleMarker(latlng, {
+          radius: 9,
+          color: "#fff",
+          fillColor: color,
+          fillOpacity: 1,
+          weight: 3,
+        });
+        const att = (response.terminals || []).find((t) => t.id === tid);
+        m.bindPopup(
+          `<strong>${tid}</strong> · ${role}<br>` +
+            (att?.via
+              ? `Подключение: <code>${att.via}</code> → <code>${att.attached_to}</code>`
+              : "В сети"),
+        );
+        resultLayer.addLayer(m);
+        bounds.push(latlng);
+      }
+
+      if (bounds.length) {
+        lastResultBounds = L.latLngBounds(bounds);
+        map.fitBounds(lastResultBounds, { padding: [48, 48] });
+      } else {
+        lastResultBounds = null;
+      }
+
+      if (!el("layerResult").checked) {
+        el("layerResult").checked = true;
+        map.addLayer(resultLayer);
+      }
+
+      try {
+        updateRadiusOverlay(parseRequest());
+      } catch (e) {
+        updateRadiusOverlay({ terminals: response.terminals || [], options: {} });
+      }
+    }
+
+    btnRun.addEventListener("click", async () => {
+      const body = buildPlanRequestFromEditor();
+      if (!body) return;
+
+      const mapZoneCount = editZones.getLayers().length;
+      const jsonZoneCount = (body.terrain?.zones || []).filter((z) => z.geometry || z.source).length;
+      if (mapZoneCount > 0 && jsonZoneCount === 0) {
+        setStatus("Зоны на карте не попали в JSON — ошибка синхронизации", "err");
+        return;
+      }
+      if (mapZoneCount > 0 && body.mode === "full" && !body.terrain?.elevation_raster?.path) {
+        setStatus("mode: full требует terrain.elevation_raster (загрузите пресет synthetic)", "err");
+        return;
+      }
+
+      const demErr = validateTerminalsInDem(body);
+      if (demErr) {
+        setStatus(demErr, "err");
+        return;
+      }
+
+      const apiUrl = el("apiUrl").value.trim() || "/plan";
+      const baseDir = el("baseDir").value.trim();
+      const headers = { "Content-Type": "application/json" };
+      if (baseDir) headers["X-Plan-Base-Dir"] = baseDir;
+
+      btnRun.disabled = true;
+      const reqBytes = new TextEncoder().encode(JSON.stringify(body)).length;
+      switchExchangeTab("request");
+      setExchangeMeta({ status: "…", kind: "loading", reqBytes });
+      const zoneHint =
+        jsonZoneCount > 0
+          ? ` · ${jsonZoneCount} ban · mode ${body.mode}` +
+            (body.mode === "euclid"
+              ? body.options?.euclid_routing === "direct"
+                ? " (прямые)"
+                : " (обход)"
+              : " (растр)")
+          : ` · mode ${body.mode}`;
+      setStatus("Расчёт…" + zoneHint, "loading");
+
+      const t0 = performance.now();
+      try {
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(body),
+        });
+        const elapsedMs = Math.round(performance.now() - t0);
+        const data = await res.json();
+
+        if (res.ok) {
+          const skipped = data.metrics?.routing_edges_skipped ?? 0;
+          const banCount = data.metrics?.ban_zones ?? 0;
+          let msg = "OK · HTTP " + res.status + " · " + elapsedMs + " ms";
+          if (banCount > 0) {
+            const routingMode = body.options?.euclid_routing || "obstacle";
+            if (body.mode === "euclid" && routingMode === "obstacle") {
+              msg += ` · ban: ${banCount} · обход (visibility)`;
+            } else {
+              msg += ` · ban: ${banCount} · forbidden рёбер: ${skipped}`;
+            }
+          }
+          setStatus(msg, "ok");
+          renderApiResponse(data, { ok: true, status: res.status, elapsedMs, reqBytes });
+          renderResultOnMap(data);
+        } else {
+          const errCode = data.errors?.[0]?.code;
+          const errMsg = data.errors?.[0]?.message || "";
+          if (errCode === "raster_extent") {
+            setStatus(
+              "raster_extent: терминал вне DEM. Загрузите пресет synthetic или mode: euclid. " + errMsg,
+              "err",
+            );
+          } else if (errCode === "route_may_be_blocked") {
+            setStatus(
+              "Маршрут невозможен: ban-зоны разрезали сеть на изолированные группы. " +
+                "Уменьшите или сдвиньте полигоны. " +
+                errMsg,
+              "err",
+            );
+          } else {
+            setStatus("Ошибка · HTTP " + res.status + " · " + elapsedMs + " ms" + (errMsg ? ": " + errMsg : ""), "err");
+          }
+          renderApiResponse(data, { ok: false, status: res.status, elapsedMs, reqBytes });
+          clearResultOnMap();
+        }
+      } catch (e) {
+        setStatus("Сеть: " + e.message, "err");
+      } finally {
+        btnRun.disabled = false;
+      }
+    });
+
+    el("btnClearResult").addEventListener("click", () => {
+      clearResultOnMap();
+      clearResponsePanel();
+      setStatus("Ответ очищен", "ok");
+    });
+
+    el("btnFitResult").addEventListener("click", () => fitResultView(true));
+
+    el("preset").addEventListener("change", async () => {
+      const url = el("preset").value;
+      if (!url) return;
+      try {
+        await loadPreset(url);
+        setStatus("Пресет загружен", "ok");
+      } catch (e) {
+        setStatus(e.message, "err");
+      }
+    });
+
+    initMapNavigation();
+    window.addEventListener("resize", invalidateMapSize);
+    map.whenReady(invalidateMapSize);
+    setTimeout(invalidateMapSize, 150);
+
+    loadPreset("/dev-fixtures/plan_request_euclid.json")
+      .then(() => {
+        el("preset").value = "/dev-fixtures/plan_request_euclid.json";
+      })
+      .catch(() => {
+        setStatus("Запустите serve_plan.py — пресеты по /dev-fixtures/", "err");
+      });
+  </script>
+</body>
+</html>

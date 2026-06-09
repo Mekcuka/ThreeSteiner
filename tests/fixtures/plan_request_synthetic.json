@@ -1,0 +1,143 @@
+{
+  "project_id": "fixture-synthetic-scene",
+  "mode": "full",
+  "terminals": [
+    {
+      "id": "t-start",
+      "type": "oil_pad",
+      "role": "start",
+      "lon": 39.00160109642316,
+      "lat": 55.94447648880544
+    },
+    {
+      "id": "t-mid",
+      "type": "oil_pad",
+      "role": "intermediate",
+      "lon": 39.0072047670713,
+      "lat": 55.94357778592078
+    },
+    {
+      "id": "t-end",
+      "type": "oil_pad",
+      "role": "end",
+      "lon": 39.00768494254051,
+      "lat": 55.942858954676176
+    },
+    {
+      "id": "t-north",
+      "type": "oil_pad",
+      "role": "branch",
+      "lon": 39.004002805924074,
+      "lat": 55.94510538599134
+    }
+  ],
+  "terrain": {
+    "elevation_raster": {
+      "path": "elevation_small.tif",
+      "crs": "EPSG:32637",
+      "nodata": -9999
+    },
+    "clip_buffer_km": 0.15,
+    "zones": [
+      {
+        "id": "ban-1",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                39.00272178200039,
+                55.94330841564842
+              ],
+              [
+                39.005123354345415,
+                55.94330833920456
+              ],
+              [
+                39.00512348482017,
+                55.94429669217709
+              ],
+              [
+                39.0027218513151,
+                55.94429676862377
+              ],
+              [
+                39.00272178200039,
+                55.94330841564842
+              ]
+            ]
+          ]
+        },
+        "mode": "ban"
+      },
+      {
+        "id": "swamp",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                39.006404089142244,
+                55.94267932732425
+              ],
+              [
+                39.00768490695881,
+                55.942679254106274
+              ],
+              [
+                39.00768504928803,
+                55.94339805635421
+              ],
+              [
+                39.006404207749924,
+                55.94339812957416
+              ],
+              [
+                39.006404089142244,
+                55.94267932732425
+              ]
+            ]
+          ]
+        },
+        "mode": "penalty",
+        "multiplier": 5.0
+      }
+    ],
+    "corridors": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            39.00160109642316,
+            55.94447648880544
+          ],
+          [
+            39.00288201693096,
+            55.94506049217318
+          ],
+          [
+            39.00576403384963,
+            55.94506039107345
+          ],
+          [
+            39.007204683673606,
+            55.943128534538396
+          ]
+        ]
+      },
+      "cost_multiplier": 0.5
+    }
+  },
+  "options": {
+    "solver": "steinerpy",
+    "connector_max_km": 0.05,
+    "steiner_radius_km": 0.0,
+    "max_slope_deg": 30,
+    "slope_cost_factor": 1.0,
+    "normalize_terminal_leaves": true,
+    "edge_vertex_spacing_km": 0.0,
+    "max_points": 50,
+    "candidate_stride_cells": 8,
+    "corridor_buffer_m": 20.0
+  }
+}
